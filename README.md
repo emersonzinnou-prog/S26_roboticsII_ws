@@ -107,4 +107,10 @@ Note that the keyboard teleoperation has higher priority than the autonomous tra
 
 ## Acknowledgment and Summary of Modifications
 This assignment is updated over the years by the course instructor Esen Yel, and course TAs Jainik Mehta, Alex Elias, and Jonathan Fried, based on the [original assignment](https://github.com/eric565648/S24_roboticsII_ws/tree/main/src/tracking_control) written by Chen Lung (Eric) Lu. 
-The main files that are changed from the original is the addition of color_goal_detection.py, update of color_obs_detection.py and the adaptation of tacking_node.py to include obstacle callback. 
+
+The main files that are changed from the original:
+- Addition of src/object_detection/object_detection/color_goal_detection.py
+- update of src/object_detection/object_detection/color_obj_detection.py
+- update of ‎src/tracking_control/tracking_control/tracking_node.py to include obstacle callback.
+- update of src/tracking_control/launch/tracking_color_object_launch.py and setup.py to include goal detection node
+- 
