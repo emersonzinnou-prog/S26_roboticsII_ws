@@ -97,6 +97,7 @@ class TrackingNode(Node):
         # or the height of the object
         # if np.linalg.norm(center_points) > 3 or center_points[2] > 0.7:
         #     return
+        #testing
         
         try:
             # Transform the center point from the camera frame to the world frame
