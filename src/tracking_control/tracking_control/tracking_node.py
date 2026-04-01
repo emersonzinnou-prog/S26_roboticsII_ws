@@ -98,7 +98,6 @@ class TrackingNode(Node):
         # if np.linalg.norm(center_points) > 3 or center_points[2] > 0.7:
         #     return
         ############################################################ edit 1
-        #print(msg)
         if np.linalg.norm(center_points) > 3 or center_points[2] > 0.7:
             return
 
@@ -239,10 +238,23 @@ class TrackingNode(Node):
         #return cmd_vel
 
         #new code:
-        dis = 0.5*np.sqrt(goal_pose[0]**2 + goal_pose[1]**2)
-        theta = np.arctan2(goal_pose[1], goal_pose[0])
+        Kp = 1
+        zetta = 0.5
+        n = 1
+        Q = 3
+
+        dis_goal = np.sqrt(goal_pose[0]**2 + goal_pose[1]**2)
+        dis_obj = np.sqrt(goal_pose[0]**2 + goal_pose[1]**2)
+
+        #theta = np.arctan2(goal_pose[1], goal_pose[0])
+
+        #Potential Field
+        U_grad = zetta * (self.pose - goal_pose)
+        U_grad = U_grad + 0.5*n*(1/Q - 1/dis_obj)*1/dis_obj**2*(dis_obj/np.linalg.norm(dis_obj))
+        
+        theta = np.arctan2(U_grad[1], U_grad[0])
         cmd_vel = Twist()
-        cmd_vel.linear.x = dis
+        cmd_vel.linear.x = min(5, Kp*dis_goal)
         cmd_vel.angular.z = theta
         
         return cmd_vel
