@@ -97,7 +97,11 @@ class TrackingNode(Node):
         # or the height of the object
         # if np.linalg.norm(center_points) > 3 or center_points[2] > 0.7:
         #     return
-        #testing
+        ############################################################ edit 1
+        if np.linalg.norm(center_points) > 3 or center_points[2] > 0.7:
+            return
+
+        ##########################################################
         
         try:
             # Transform the center point from the camera frame to the world frame
@@ -123,6 +127,11 @@ class TrackingNode(Node):
         # or the height of the object
         # if np.linalg.norm(center_points) > 3 or center_points[2] > 0.7:
         #     return
+
+        ################################################################
+        if np.linalg.norm(center_points) > 3 or center_points[2] > 0.7:
+            return
+        ###############################################################
         
         try:
             # Transform the center point from the camera frame to the world frame
@@ -160,6 +169,10 @@ class TrackingNode(Node):
     def timer_update(self):
         ################### Write your code here ###################
         
+        ################################################################
+        #no changes yet
+        ###############################################################
+        
         # Now, the robot stops if the object is not detected
         # But, you may want to think about what to do in this case
         # and update the command velocity accordingly
@@ -174,26 +187,41 @@ class TrackingNode(Node):
         current_obs_pose, current_goal_pose = self.get_current_poses()
         
         # TODO: get the control velocity command
-        cmd_vel = self.controller()
+        ###################################################################### _
+        #cmd_vel = self.controller()   #old line
+        cmd_vel = self.controller(current_obs_pose, current_goal_pose)
+
+        ################################################################### ^
         
         # publish the control command
         self.pub_control_cmd.publish(cmd_vel)
         #################################################
     
-    def controller(self):
+    def controller(self, obs_pose, goal_pose):
         # Instructions: You can implement your own control algorithm here
         # feel free to modify the code structure, add more parameters, more input variables for the function, etc.
         
         ########### Write your code here ###########
-        
+
+        ###################################################################### _
+        # old code:
         # TODO: Update the control velocity command
+        #cmd_vel = Twist()
+        #cmd_vel.linear.x = 0
+        #cmd_vel.linear.y = 0
+        #cmd_vel.angular.z = 0
+        #return cmd_vel
+
+        #new code:
+        dis = 0.5*np.sqrt(goal_pose[0]**2 + goal_pose[1]**2)
+        theta = np.arctan2(goal_pose[1], goal_pose[0])
         cmd_vel = Twist()
-        cmd_vel.linear.x = 0
-        cmd_vel.linear.y = 0
-        cmd_vel.angular.z = 0
+        cmd_vel.linear.x = dis
+        cmd_vel.angular.z = theta
+        
         return cmd_vel
     
-        ############################################
+       ################################################################### ^
 
 def main(args=None):
     # Initialize the rclpy library
