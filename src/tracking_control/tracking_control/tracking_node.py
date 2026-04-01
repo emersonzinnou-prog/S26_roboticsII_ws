@@ -243,13 +243,19 @@ class TrackingNode(Node):
         n = 1
         Q = 3
 
-        dis_goal = np.sqrt(goal_pose[0]**2 + goal_pose[1]**2)
-        dis_obj = np.sqrt(goal_pose[0]**2 + goal_pose[1]**2)
+        transform = self.tf_buffer.lookup_transform('base_footprint', odom_id, rclpy.time.Time())
+        robot_world_x = transform.transform.translation.x
+        robot_world_y = transform.transform.translation.y
+
+        pose = np.array([robot_world_x, robot_world_y])
+
+        dis_goal = np.sqrt((pose[0] - goal_pose[0])**2 + (pose[1]-goal_pose[1])**2)
+        dis_obj = np.sqrt((pose[0] - obs_pose[0])**2 + (pose[1]-obs_pose[1])**2)
 
         #theta = np.arctan2(goal_pose[1], goal_pose[0])
 
         #Potential Field
-        U_grad = zetta * (self.pose - goal_pose)
+        U_grad = zetta * (pose - goal_pose)
         U_grad = U_grad + 0.5*n*(1/Q - 1/dis_obj)*1/dis_obj**2*(dis_obj/np.linalg.norm(dis_obj))
         
         theta = np.arctan2(U_grad[1], U_grad[0])
