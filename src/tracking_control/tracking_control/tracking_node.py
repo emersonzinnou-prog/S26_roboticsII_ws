@@ -156,9 +156,24 @@ class TrackingNode(Node):
             robot_world_y = transform.transform.translation.y
             robot_world_z = transform.transform.translation.z
             robot_world_R = q2R([transform.transform.rotation.w, transform.transform.rotation.x, transform.transform.rotation.y, transform.transform.rotation.z])
-            obstacle_pose = robot_world_R@self.obs_pose+np.array([robot_world_x,robot_world_y,robot_world_z])
-            goal_pose = robot_world_R@self.goal_pose+np.array([robot_world_x,robot_world_y,robot_world_z])
-    
+
+
+            ################################################################### changing this
+            #old code:
+            #obstacle_pose = robot_world_R@self.obs_pose+np.array([robot_world_x,robot_world_y,robot_world_z])
+            #goal_pose = robot_world_R@self.goal_pose+np.array([robot_world_x,robot_world_y,robot_world_z])
+
+            #new code:
+            if self.obs_pose is None:
+                obstacle_pose = None
+            else:
+                obstacle_pose = robot_world_R@self.obs_pose+np.array([robot_world_x,robot_world_y,robot_world_z])
+            if self.goal_pose is None:
+                goal_pose = None
+            else:
+                goal_pose = robot_world_R@self.goal_pose+np.array([robot_world_x,robot_world_y,robot_world_z])
+                    
+            ################################################################### changing this ^
         
         except TransformException as e:
             self.get_logger().error('Transform error: ' + str(e))
@@ -170,13 +185,21 @@ class TrackingNode(Node):
         ################### Write your code here ###################
         
         ################################################################
-        #no changes yet
+        pose_check = self.get_current_poses()
+        if pose_check is None:
+            cmd_vel = Twist()
+            cmd_vel.linear.x = 0.0
+            cmd_vel.angular.z = 0.0
+            self.pub_control_cmd.publish(cmd_vel)
+            return
+            
+        current_obs_pose, current_goal_pose = pose_check
         ###############################################################
         
         # Now, the robot stops if the object is not detected
         # But, you may want to think about what to do in this case
         # and update the command velocity accordingly
-        if self.goal_pose is None:
+        if current_goal_pose is None:
             cmd_vel = Twist()
             cmd_vel.linear.x = 0.0
             cmd_vel.angular.z = 0.0
@@ -184,12 +207,14 @@ class TrackingNode(Node):
             return
         
         # Get the current object pose in the robot base_footprint frame
-        current_obs_pose, current_goal_pose = self.get_current_poses()
+        #current_obs_pose, current_goal_pose = self.get_current_poses()
+        # ^commenting this line out
         
         # TODO: get the control velocity command
-        ###################################################################### _
+        ###################################################################### _        
         #cmd_vel = self.controller()   #old line
         cmd_vel = self.controller(current_obs_pose, current_goal_pose)
+        
 
         ################################################################### ^
         
