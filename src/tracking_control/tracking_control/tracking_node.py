@@ -164,6 +164,7 @@ class TrackingNode(Node):
             #goal_pose = robot_world_R@self.goal_pose+np.array([robot_world_x,robot_world_y,robot_world_z])
 
             #new code:
+            print(robot_world_x,robot_world_y,robot_world_z)
             if self.obs_pose is None:
                 obstacle_pose = None
             else:
