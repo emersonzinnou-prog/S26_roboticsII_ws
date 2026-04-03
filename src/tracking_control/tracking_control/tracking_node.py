@@ -254,6 +254,7 @@ class TrackingNode(Node):
 
         #Potential Field
         U_grad = zetta * (pose - goal_pose)
+        
         if not obs_pose == None:
             dis_obj = np.sqrt((pose[0] - obs_pose[0])**2 + (pose[1]-obs_pose[1])**2)
             U_grad = U_grad + 0.5*n*(1/Q - 1/dis_obj)*1/dis_obj**2*(dis_obj/np.linalg.norm(dis_obj))
