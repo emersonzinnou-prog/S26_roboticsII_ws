@@ -98,8 +98,8 @@ class TrackingNode(Node):
         # if np.linalg.norm(center_points) > 3 or center_points[2] > 0.7:
         #     return
         ############################################################ edit 1
-        if np.linalg.norm(center_points) > 3 or center_points[2] > 0.7:
-            return
+        #if np.linalg.norm(center_points) > 3 or center_points[2] > 0.7:
+        #    return
 
         ##########################################################
         
@@ -129,8 +129,8 @@ class TrackingNode(Node):
         #     return
 
         ################################################################
-        if np.linalg.norm(center_points) > 3 or center_points[2] > 0.7:
-            return
+        #if np.linalg.norm(center_points) > 3 or center_points[2] > 0.7:
+        #    return
         ###############################################################
         
         try:
@@ -170,7 +170,7 @@ class TrackingNode(Node):
                 obstacle_pose = robot_world_R@self.obs_pose+np.array([robot_world_x,robot_world_y,robot_world_z])
             if self.goal_pose:
                 goal_pose = robot_world_R@self.goal_pose+np.array([robot_world_x,robot_world_y,robot_world_z])
-            print(obstacle_pose, goal_pose)
+            #print(obstacle_pose, goal_pose)
             ################################################################### changing this ^
         
         except TransformException as e:
