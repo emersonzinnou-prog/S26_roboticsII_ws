@@ -160,19 +160,17 @@ class TrackingNode(Node):
 
             ################################################################### changing this
             #old code:
-            obstacle_pose = robot_world_R@self.obs_pose+np.array([robot_world_x,robot_world_y,robot_world_z])
-            goal_pose = robot_world_R@self.goal_pose+np.array([robot_world_x,robot_world_y,robot_world_z])
-            print(obstacle_pose, goal_pose)
+            #obstacle_pose = robot_world_R@self.obs_pose+np.array([robot_world_x,robot_world_y,robot_world_z])
+            #goal_pose = robot_world_R@self.goal_pose+np.array([robot_world_x,robot_world_y,robot_world_z])
+
             #new code:
-            #if self.obs_pose is None:
-            #    obstacle_pose = None
-            #else:
-            #    obstacle_pose = robot_world_R@self.obs_pose+np.array([robot_world_x,robot_world_y,robot_world_z])
-            #if self.goal_pose is None:
-            #    goal_pose = None
-            #else:
-            #    goal_pose = robot_world_R@self.goal_pose+np.array([robot_world_x,robot_world_y,robot_world_z])
-                    
+            obstacle_pose = None
+            goal_pose = None
+            if self.obs_pose:
+                obstacle_pose = robot_world_R@self.obs_pose+np.array([robot_world_x,robot_world_y,robot_world_z])
+            if self.goal_pose:
+                goal_pose = robot_world_R@self.goal_pose+np.array([robot_world_x,robot_world_y,robot_world_z])
+            print(obstacle_pose, goal_pose)
             ################################################################### changing this ^
         
         except TransformException as e:
