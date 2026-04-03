@@ -154,10 +154,10 @@ class TrackingNode(Node):
         try:
             # from base_footprint to odom
             transform = self.tf_buffer.lookup_transform('base_footprint', odom_id, rclpy.time.Time())
-            robot_world_x = transform.transform.translation.x
-            robot_world_y = transform.transform.translation.y
-            robot_world_z = transform.transform.translation.z
-            robot_world_R = q2R([transform.transform.rotation.w, transform.transform.rotation.x, transform.transform.rotation.y, transform.transform.rotation.z])
+            self.robot_world_x = transform.transform.translation.x
+            self.robot_world_y = transform.transform.translation.y
+            self.robot_world_z = transform.transform.translation.z
+            self.robot_world_R = q2R([transform.transform.rotation.w, transform.transform.rotation.x, transform.transform.rotation.y, transform.transform.rotation.z])
 
 
             ################################################################### changing this
@@ -169,9 +169,9 @@ class TrackingNode(Node):
             obstacle_pose = None
             goal_pose = None
             if not self.obs_pose is None:
-                obstacle_pose = robot_world_R@self.obs_pose+np.array([robot_world_x,robot_world_y,robot_world_z])
+                obstacle_pose = self.robot_world_R@self.obs_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
             if not self.goal_pose is None:
-                goal_pose = robot_world_R@self.goal_pose+np.array([robot_world_x,robot_world_y,robot_world_z])
+                goal_pose = self.robot_world_R@self.goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
             print(obstacle_pose, goal_pose)
             ################################################################### changing this ^
         
@@ -243,12 +243,7 @@ class TrackingNode(Node):
         n = 1
         Q = 3
 
-        transform = self.tf_buffer.lookup_transform('base_footprint', odom_id, rclpy.time.Time())
-        robot_world_x = transform.transform.translation.x
-        robot_world_y = transform.transform.translation.y
-        print(robot_world_x,robot_world_y)
-
-        pose = np.array([robot_world_x, robot_world_y])
+        pose = np.array([self.robot_world_x, self.robot_world_y])
 
         dis_goal = np.sqrt((pose[0] - goal_pose[0])**2 + (pose[1]-goal_pose[1])**2)
         dis_obj = np.sqrt((pose[0] - obs_pose[0])**2 + (pose[1]-obs_pose[1])**2)
