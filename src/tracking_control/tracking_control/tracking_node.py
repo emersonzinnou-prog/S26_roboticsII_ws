@@ -244,7 +244,9 @@ class TrackingNode(Node):
         Q = 3
 
         pose = np.array([self.robot_world_x, self.robot_world_y])
-
+        print("pose: " + pose)
+        print("goal: " + goal_pose)
+        print("obs: " + obs_pose)
         dis_goal = np.sqrt((pose[0] - goal_pose[0])**2 + (pose[1]-goal_pose[1])**2)
         dis_obj = np.sqrt((pose[0] - obs_pose[0])**2 + (pose[1]-obs_pose[1])**2)
 
