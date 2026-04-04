@@ -244,7 +244,7 @@ class TrackingNode(Node):
         n = 1
         Q = 3
 
-        pose = np.array([self.robot_world_x, self.robot_world_y])
+        pose = np.array([self.robot_world_x, self.robot_world_y, self.robot_world_z])
         print("pose:", pose)
         print("goal:", goal_pose)
         print("obs:", obs_pose)
