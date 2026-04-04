@@ -60,8 +60,8 @@ class ColorObjDetectionNode(Node):
         self.get_logger().info('Color Goal Detection Node Started')
         
         # Declare the parameters for the color detection
-        self.declare_parameter('color_low', [170, 225, 225])
-        self.declare_parameter('color_high', [0, 0, 0])
+        self.declare_parameter('color_low', [0, 100, 100])
+        self.declare_parameter('color_high', [15, 255, 255])
         self.declare_parameter('object_size_min', 5)
         # Used to convert between ROS and OpenCV images
         self.br = CvBridge()
