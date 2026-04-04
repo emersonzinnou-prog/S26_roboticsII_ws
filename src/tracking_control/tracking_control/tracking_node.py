@@ -132,6 +132,7 @@ class TrackingNode(Node):
         ################################################################
         if np.linalg.norm(center_points) > 3 or center_points[2] > 0.7:
             return
+        
         print("Found Goal")
         ###############################################################
         
