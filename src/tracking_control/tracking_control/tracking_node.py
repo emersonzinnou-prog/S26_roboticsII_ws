@@ -245,7 +245,7 @@ class TrackingNode(Node):
         Q = 3
 
         pose = np.array([self.robot_world_x, self.robot_world_y, self.robot_world_z])
-        #print("pose:", pose)
+        print("pose:", pose)
         #print("goal:", goal_pose)
         #print("obs:", obs_pose)
 
@@ -255,7 +255,7 @@ class TrackingNode(Node):
 
         #Potential Field
         U_grad = zetta * (pose - goal_pose)
-        
+        print(U_grad)
         if not obs_pose is None:
             dis_obj = np.sqrt((pose[0] - obs_pose[0])**2 + (pose[1]-obs_pose[1])**2)
             U_grad = U_grad + 0.5*n*(1/Q - 1/dis_obj)*1/dis_obj**2*(dis_obj/np.linalg.norm(dis_obj))
@@ -264,7 +264,7 @@ class TrackingNode(Node):
         cmd_vel = Twist()
         cmd_vel.linear.x = max(-5,min(5,Kp*U_grad[0]))
         cmd_vel.linear.y = max(-5,min(5,Kp*U_grad[1]))
-        cmd_vel.angular.z = theta
+        cmd_vel.angular.z = 0
         
         
         return cmd_vel
