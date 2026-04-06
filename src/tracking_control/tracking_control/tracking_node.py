@@ -214,6 +214,15 @@ class TrackingNode(Node):
         # TODO: get the control velocity command
         ###################################################################### _        
         #cmd_vel = self.controller()   #old line
+        odom_id = self.get_parameter('world_frame_id').get_parameter_value().string_value
+        # Get the current robot pose
+        # from base_footprint to odom
+        transform = self.tf_buffer.lookup_transform('base_footprint', odom_id, rclpy.time.Time())
+        self.robot_world_x = transform.transform.translation.x
+        self.robot_world_y = transform.transform.translation.y
+        self.robot_world_z = transform.transform.translation.z
+        self.robot_world_R = q2R([transform.transform.rotation.w, transform.transform.rotation.x, transform.transform.rotation.y, transform.transform.rotation.z])
+
         cmd_vel = self.controller(current_obs_pose, current_goal_pose)
         
 
@@ -249,7 +258,7 @@ class TrackingNode(Node):
         print("goal:", goal_pose)
         #print("obs:", obs_pose)
 
-        dis_goal = (pose - goal_pose)
+        dis_goal = (goal_pose - pose)
 
         #theta = np.arctan2(goal_pose[1], goal_pose[0])
 
@@ -262,8 +271,8 @@ class TrackingNode(Node):
         #print(U_grad)
         theta =np.arctan2(pose[1], pose[0]) - np.arctan2(U_grad[1], U_grad[0])
         cmd_vel = Twist()
-        cmd_vel.linear.x = max(-1.0,min(1.0,-Kp*dis_goal[0]))
-        cmd_vel.linear.y = max(-1.0,min(1.0,-Kp*dis_goal[1]))
+        cmd_vel.linear.x = max(-1.0,min(1.0,Kp*dis_goal[0]))
+        cmd_vel.linear.y = max(-1.0,min(1.0,Kp*dis_goal[1]))
         cmd_vel.angular.z = 0.0
         
         
