@@ -260,7 +260,7 @@ class TrackingNode(Node):
         print("goal:", world_goal_pose)
         #print("obs:", obs_pose)
 
-        dis_goal = np.sqrt((world_goal_pose[0] - pose[0])**2 + (world_goal_pose[1]-pose[1])**2)
+        dis_goal = (world_goal_pose - pose)
 
         #theta = np.arctan2(goal_pose[1], goal_pose[0])
 
