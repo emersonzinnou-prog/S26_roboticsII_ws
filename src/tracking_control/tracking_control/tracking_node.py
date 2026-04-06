@@ -239,7 +239,7 @@ class TrackingNode(Node):
         #return cmd_vel
 
         #new code:
-        Kp = 10
+        Kp = 5
         zetta = 0.5
         n = 1
         Q = 3
@@ -262,8 +262,8 @@ class TrackingNode(Node):
         #print(U_grad)
         theta =np.arctan2(pose[1], pose[0]) - np.arctan2(U_grad[1], U_grad[0])
         cmd_vel = Twist()
-        cmd_vel.linear.x = max(-5,min(5,-Kp*dis_goal[0]))
-        cmd_vel.linear.y = max(-5,min(5,-Kp*dis_goal[1]))
+        cmd_vel.linear.x = max(-1.0,min(1.0,-Kp*dis_goal[0]))
+        cmd_vel.linear.y = max(-1.0,min(1.0,-Kp*dis_goal[1]))
         cmd_vel.angular.z = 0
         
         
