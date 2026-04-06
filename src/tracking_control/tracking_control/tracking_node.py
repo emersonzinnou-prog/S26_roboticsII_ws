@@ -257,7 +257,7 @@ class TrackingNode(Node):
         print("pose:", pose)
 
         world_goal_pose = self.robot_world_R@self.goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
-        world_obj_pose = self.robot_world_R@self.obj_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
+        world_obj_pose = self.robot_world_R@self.obs_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
 
         print("goal:", world_goal_pose)
         #print("obs:", obs_pose)
