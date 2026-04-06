@@ -239,7 +239,7 @@ class TrackingNode(Node):
         #return cmd_vel
 
         #new code:
-        Kp = 1
+        Kp = 10
         zetta = 0.5
         n = 1
         Q = 3
