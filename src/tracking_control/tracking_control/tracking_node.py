@@ -249,8 +249,8 @@ class TrackingNode(Node):
 
         #new code:
         Kp = 5
-        zetta = 2
-        n = 1
+        zetta = 1
+        n = 2
         Q = 0.2
 
         pose = np.array([self.robot_world_x, self.robot_world_y, self.robot_world_z])
@@ -258,7 +258,7 @@ class TrackingNode(Node):
 
         world_goal_pose = self.robot_world_R@self.goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
         print("goal:", world_goal_pose)
-        #print("obs:", obs_pose)
+        print("obs:", obs_pose)
 
         dis_goal = (world_goal_pose - pose)
 
@@ -271,9 +271,9 @@ class TrackingNode(Node):
             world_obs_pose = self.robot_world_R@self.obs_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
 
             dis_obj = world_obs_pose - pose[0]
-            U_grad = U_grad + 0.5*n*(1/Q - 1/dis_obj)*1/dis_obj**2*(dis_obj/np.linalg.norm(dis_obj))
+            U_grad = U_grad - 0.5*n*(1/Q - 1/dis_obj)*1/dis_obj**2*(dis_obj/np.linalg.norm(dis_obj))
         
-        print(U_grad)
+            print(U_grad)
         theta =np.arctan2(pose[1], pose[0]) - np.arctan2(U_grad[1], U_grad[0])
         cmd_vel = Twist()
         cmd_vel.linear.x = max(-1.0,min(1.0,Kp*U_grad[0]))
