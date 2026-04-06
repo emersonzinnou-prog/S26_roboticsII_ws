@@ -250,7 +250,7 @@ class TrackingNode(Node):
         #new code:
         Kp = 5
         zetta = 1
-        n = 2
+        n = 0.5
         Q = 0.2
 
         pose = np.array([self.robot_world_x, self.robot_world_y, self.robot_world_z])
@@ -269,9 +269,9 @@ class TrackingNode(Node):
         #print(dis_goal)
         if not obs_pose is None:
             world_obs_pose = self.robot_world_R@self.obs_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
-
-            dis_obj = world_obs_pose - pose[0]
-            U_grad = U_grad - 0.5*n*(1/Q - 1/dis_obj)*1/dis_obj**2*(dis_obj/np.linalg.norm(dis_obj))
+            if np.sqrt((world_obs_pose[0] - pose[0])**2 + (world_obs_pose[1] - pose[1])**2) < Q:
+                dis_obj = world_obs_pose - pose
+                U_grad = U_grad - 0.5*n*(1/Q - 1/dis_obj)*1/dis_obj**2*(dis_obj/np.linalg.norm(dis_obj))
         
             print(U_grad)
         theta =np.arctan2(pose[1], pose[0]) - np.arctan2(U_grad[1], U_grad[0])
