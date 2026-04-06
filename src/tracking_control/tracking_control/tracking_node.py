@@ -264,7 +264,7 @@ class TrackingNode(Node):
         cmd_vel = Twist()
         cmd_vel.linear.x = max(-1.0,min(1.0,-Kp*dis_goal[0]))
         cmd_vel.linear.y = max(-1.0,min(1.0,-Kp*dis_goal[1]))
-        cmd_vel.angular.z = 0
+        cmd_vel.angular.z = 0.0
         
         
         return cmd_vel
