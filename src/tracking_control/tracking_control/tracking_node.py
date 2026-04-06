@@ -173,7 +173,7 @@ class TrackingNode(Node):
                 obstacle_pose = self.robot_world_R@self.obs_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
             if not self.goal_pose is None:
                 goal_pose = self.robot_world_R@self.goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
-            print(obstacle_pose, goal_pose)
+            #print(obstacle_pose, goal_pose)
             ################################################################### changing this ^
         
         except TransformException as e:
