@@ -258,7 +258,6 @@ class TrackingNode(Node):
 
         world_goal_pose = self.robot_world_R@self.goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
         print("goal:", world_goal_pose)
-        print("obs:", obs_pose)
 
         dis_goal = (world_goal_pose - pose)
 
@@ -269,6 +268,7 @@ class TrackingNode(Node):
         #print(dis_goal)
         if not obs_pose is None:
             world_obs_pose = self.robot_world_R@self.obs_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
+            print("obs:", world_obs_pose)
             if np.sqrt((world_obs_pose[0] - pose[0])**2 + (world_obs_pose[1] - pose[1])**2) < Q:
                 dis_obj = world_obs_pose - pose
                 U_grad = U_grad - 0.5*n*(1/Q - 1/dis_obj)*1/dis_obj**2*(dis_obj/np.linalg.norm(dis_obj))
