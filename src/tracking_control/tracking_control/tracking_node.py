@@ -260,17 +260,17 @@ class TrackingNode(Node):
         print("goal:", world_goal_pose)
         #print("obs:", obs_pose)
 
-        dis_goal = (world_goal_pose - pose)
+        dis_goal = np.sqrt((world_goal_pose[0] - pose[0])**2 + (world_goal_pose[1]-pose[1])**2)
 
         #theta = np.arctan2(goal_pose[1], goal_pose[0])
 
         #Potential Field
-        U_grad = zetta * (pose - world_goal_pose)
+        U_grad = zetta * dis_goal
         #print(dis_goal)
         if not obs_pose is None:
             world_obs_pose = self.robot_world_R@self.obs_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
 
-            dis_obj = np.sqrt((pose[0] - world_obs_pose[0])**2 + (pose[1]-world_obs_pose[1])**2)
+            dis_obj = np.sqrt((world_obs_pose[0] - pose[0])**2 + (world_obs_pose[1]-pose[1])**2)
             #U_grad = U_grad + 0.5*n*(1/Q - 1/dis_obj)*1/dis_obj**2*(dis_obj/np.linalg.norm(dis_obj))
         print(U_grad)
         theta =np.arctan2(pose[1], pose[0]) - np.arctan2(U_grad[1], U_grad[0])
