@@ -267,7 +267,7 @@ class TrackingNode(Node):
 
         dis_goal = (world_goal_pose - pose)
 
-        if np.sqrt((world_goal_pose[0] - pose[0])**2 + (world_goal_pose[1] - pose[1])**2 < 0.3
+        if np.sqrt((world_goal_pose[0] - pose[0])**2 + (world_goal_pose[1] - pose[1])**2) < 0.3:
             print("close to goal")
 
         #theta = np.arctan2(goal_pose[1], goal_pose[0])
