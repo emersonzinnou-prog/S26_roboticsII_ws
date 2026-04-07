@@ -283,9 +283,9 @@ class TrackingNode(Node):
         theta =np.arctan2(pose[1], pose[0]) - np.arctan2(U_grad[1], U_grad[0])
         cmd_vel = Twist()
         cmd_vel.linear.x = max(-0.2,min(0.2, U_grad[0]/np.linalg.norm(U_grad)))
-        #cmd_vel.linear.y = max(-0.2,min(0.2, U_grad[1]/np.linalg.norm(U_grad)))
+        cmd_vel.linear.y = max(-0.2,min(0.2, U_grad[1]/np.linalg.norm(U_grad)))
         #cmd_vel.linear.y = 0
-        cmd_vel.angular.z = max(-0.2, min(0.2, Kt*theta))
+        cmd_vel.angular.z = max(-0.2, min(0.2, -Kt*theta))
         
         
         return cmd_vel
