@@ -251,58 +251,44 @@ class TrackingNode(Node):
         #cmd_vel.linear.y = 0
         #cmd_vel.angular.z = 0
         #return cmd_vel
-        K_att       = 1.0   # Attractive gain
-        K_rep       = 0.5   # Repulsive gain
-        d0          = 0.8   # Obstacle influence radius [m]
-        max_linear  = 0.3   # Max forward speed [m/s]
-        max_angular = 1.0   # Max yaw rate [rad/s]
-        K_angular   = 2.0   # Proportional gain for heading error
-        # ----------------------------------------------------------------
 
-        # Determine active target in base_footprint frame
-        if self.state == 'go_to_goal':
-            target = np.array([current_goal_pose[0], current_goal_pose[1]])
-        else:
-            # Transform odom-frame start pose into base_footprint frame
-            rx, ry, ryaw = self.get_robot_pose_in_odom()
-            if rx is None or self.start_pose is None:
-                return Twist()
-            dx = self.start_pose[0] - rx
-            dy = self.start_pose[1] - ry
-            target = np.array([
-                 math.cos(ryaw) * dx + math.sin(ryaw) * dy,
-                -math.sin(ryaw) * dx + math.cos(ryaw) * dy
-            ])
+        #new code:
+        Kp = 2
+        Kt = 0.5
+        zetta = 1
+        n = 0.2
+        Q = 0.3
 
-        # Attractive force (unit vector toward target, scaled by K_att)
-        dist_target = np.linalg.norm(target)
-        F_att = K_att * (target / dist_target) if dist_target > 1e-4 else np.zeros(2)
+        pose = np.array([self.robot_world_x, self.robot_world_y, self.robot_world_z])
+        print("pose:", pose)
 
-        # Repulsive force (away from obstacle when inside d0)
-        obs_xy   = np.array([current_obs_pose[0], current_obs_pose[1]])
-        dist_obs = np.linalg.norm(obs_xy)
-        if 1e-4 < dist_obs < d0:
-            rep_mag = K_rep * (1.0 / dist_obs - 1.0 / d0) / (dist_obs ** 2)
-            F_rep   = rep_mag * (-obs_xy / dist_obs)
-        else:
-            F_rep = np.zeros(2)
+        world_goal_pose = self.robot_world_R@self.goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
+        print("goal:", world_goal_pose)
 
-        # Combined force -> desired heading
-        F_total       = F_att + F_rep
-        desired_angle = math.atan2(F_total[1], F_total[0])
+        dis_goal = (world_goal_pose - pose)
 
-        # Angular velocity proportional to heading error
-        angular_z = max(-max_angular, min(max_angular, K_angular * desired_angle))
+        #theta = np.arctan2(goal_pose[1], goal_pose[0])
 
-        # Linear velocity: slow down for large heading error or near obstacle
-        angle_factor = math.cos(desired_angle)
-        obs_factor   = min(1.0, max(0.0, (dist_obs - 0.3) / (d0 - 0.3))) if dist_obs < d0 else 1.0
-        linear_x     = max_linear * max(0.0, angle_factor) * obs_factor
-
+        #Potential Field
+        U_grad = zetta * dis_goal
+        #print(dis_goal)
+        if not obs_pose is None:
+            world_obs_pose = self.robot_world_R@self.obs_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
+            print("obs:", world_obs_pose)
+            if np.sqrt((world_obs_pose[0] - pose[0])**2 + (world_obs_pose[1] - pose[1])**2) < Q:
+                print("close to obj")
+                dis_obj = world_obs_pose - pose
+                U_grad = U_grad - 0.5*n*(1/Q - 1/dis_obj)*1/dis_obj**2*(dis_obj/np.linalg.norm(dis_obj))
+        
+            print(U_grad)
+        theta =np.arctan2(pose[1], pose[0]) - np.arctan2(U_grad[1], U_grad[0])
         cmd_vel = Twist()
-        cmd_vel.linear.x  = linear_x
-        cmd_vel.linear.y  = 0.0
-        cmd_vel.angular.z = angular_z
+        cmd_vel.linear.x = max(-0.2,min(0.2, Kp*U_grad[0]/np.linalg.norm(U_grad)))
+        cmd_vel.linear.y = max(-0.2,min(0.2, Kp*U_grad[1]/np.linalg.norm(U_grad)))
+        #cmd_vel.linear.y = 0
+        cmd_vel.angular.z = max(-0.2, min(0.2, -Kt*theta))
+        
+        
         return cmd_vel
     
        ################################################################### ^
