@@ -277,7 +277,7 @@ class TrackingNode(Node):
             world_goal_pose = self.start
 
         dis_goal = (world_goal_pose - pose)
-        
+
         if np.sqrt((dis_goal[0])**2 + (dis_goal[1])**2) < 0.3:
             print("close to goal")
             cmd_vel = Twist()
@@ -293,8 +293,8 @@ class TrackingNode(Node):
         #Potential Field
         U_grad = zetta * dis_goal
         #print(dis_goal)
-        #if not obs_pose is None:
-        if not obs_pose == False:
+        """
+        if not obs_pose is None:
             #world_obs_pose = self.robot_world_R@self.obs_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
             world_obs_pose = obs_pose
             print("obs:", world_obs_pose)
@@ -304,7 +304,8 @@ class TrackingNode(Node):
                 U_grad = U_grad - 0.5*n*(1/Q - 1/dis_obj)*1/dis_obj**2*(dis_obj/np.linalg.norm(dis_obj))
         
             print(U_grad)
-
+        """
+        
         theta = np.arctan2(dis_goal[1], dis_goal[0])
         cmd_vel = Twist()
         cmd_vel.linear.x = max(-0.20,min(0.20, Kp*U_grad[0]/np.linalg.norm(U_grad[0:2])))
