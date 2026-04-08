@@ -207,7 +207,7 @@ class TrackingNode(Node):
 
         # Tuning knobs ---------------------------------------------------
         K_att       = 1.0   # Attractive gain
-        K_rep       = 0.5   # Repulsive gain
+        K_rep       = 0.25   # Repulsive gain
         d0          = 0.8   # Obstacle influence radius [m]
         max_linear  = 0.3   # Max forward speed [m/s]
         max_angular = 1.0   # Max yaw rate [rad/s]
