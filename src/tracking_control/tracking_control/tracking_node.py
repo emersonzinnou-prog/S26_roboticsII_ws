@@ -262,8 +262,8 @@ class TrackingNode(Node):
         Kp = 2
         Kt = 0.5
         zetta = 1
-        n = 3
-        Q = 0.4
+        n = 2
+        Q = 0.6
 
         pose = self.robot_world_R@np.array([-self.robot_world_x, -self.robot_world_y, self.robot_world_z])
         print("pose:", pose)
