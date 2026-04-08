@@ -262,7 +262,7 @@ class TrackingNode(Node):
         Kp = 2
         Kt = 0.5
         zetta = 1
-        n = 2
+        n = 0.5
         Q = 0.6
 
         pose = self.robot_world_R@np.array([-self.robot_world_x, -self.robot_world_y, self.robot_world_z])
@@ -278,7 +278,7 @@ class TrackingNode(Node):
 
         dis_goal = (world_goal_pose - pose)
 
-        if np.sqrt((dis_goal[0])**2 + (dis_goal[1])**2) < 0.3:
+        if np.sqrt((dis_goal[0])**2 + (dis_goal[1])**2) < 0.5:
             print("close to goal")
             cmd_vel = Twist()
             cmd_vel.linear.x = 0.
