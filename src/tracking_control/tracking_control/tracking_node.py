@@ -260,7 +260,7 @@ class TrackingNode(Node):
 
         #new code:
         Kp = 2
-        Kt = 0.5
+        Kt = 0.1
         zetta = 1
         n = 0.5
         Q = 0.6
@@ -276,9 +276,9 @@ class TrackingNode(Node):
         if self.state == "Home":
             world_goal_pose = self.start
 
-        dis_goal = (world_goal_pose - pose)
+        dis_goal = (pose - world_goal_pose)
 
-        if np.sqrt((dis_goal[0])**2 + (dis_goal[1])**2) < 0.5:
+        if np.sqrt((dis_goal[0])**2 + (dis_goal[1])**2) < 0.3:
             print("close to goal")
             cmd_vel = Twist()
             cmd_vel.linear.x = 0.
@@ -312,7 +312,7 @@ class TrackingNode(Node):
         cmd_vel.linear.x = max(-0.05,min(0.05, Kp*U_grad[0]/np.linalg.norm(U_grad[0:2])))
         cmd_vel.linear.y = max(-0.15,min(0.15, 0.6*U_grad[1]/np.linalg.norm(U_grad[0:2])))
         #cmd_vel.linear.y = 0
-        #cmd_vel.angular.z = max(-2, min(2, -Kt*theta))*0.01
+        cmd_vel.angular.z = max(-2, min(2, Kt*theta))
         
         
         return cmd_vel
