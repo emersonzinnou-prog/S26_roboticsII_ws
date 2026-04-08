@@ -254,7 +254,7 @@ class TrackingNode(Node):
         #return cmd_vel
 
         #new code:
-        Kp = 2
+        Kp = 4
         Kt = 0.5
         zetta = 1
         n = 0.5
@@ -267,9 +267,9 @@ class TrackingNode(Node):
         world_goal_pose = goal_pose
         print("goal:", world_goal_pose)
 
-        dis_goal = (world_goal_pose)
+        dis_goal = (world_goal_pose - pose)
 
-        if np.sqrt((world_goal_pose[0] - pose[0])**2 + (world_goal_pose[1] - pose[1])**2) < 0.3:
+        if np.sqrt((dis_goal[0])**2 + (dis_goal[1])**2) < 0.3:
             print("close to goal")
             cmd_vel = Twist()
             cmd_vel.linear.x = 0
