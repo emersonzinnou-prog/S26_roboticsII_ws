@@ -263,8 +263,8 @@ class TrackingNode(Node):
         pose = np.array([self.robot_world_x, self.robot_world_y, self.robot_world_z])
         print("pose:", pose)
 
-        #world_goal_pose = self.robot_world_R@self.goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
-        world_goal_pose = goal_pose
+        world_goal_pose = self.robot_world_R@self.goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
+        #world_goal_pose = goal_pose
         print("goal:", world_goal_pose)
 
         dis_goal = (world_goal_pose - pose)
@@ -284,8 +284,8 @@ class TrackingNode(Node):
         U_grad = zetta * dis_goal
         #print(dis_goal)
         if not obs_pose is None:
-            #world_obs_pose = self.robot_world_R@self.obs_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
-            world_obs_pose = obs_pose
+            world_obs_pose = self.robot_world_R@self.obs_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
+            #world_obs_pose = obs_pose
             print("obs:", world_obs_pose)
             if np.sqrt((world_obs_pose[0])**2 + (world_obs_pose[1])**2) < Q:
                 
@@ -298,7 +298,7 @@ class TrackingNode(Node):
         cmd_vel.linear.x = max(-2,min(2, Kp*U_grad[0]/np.linalg.norm(U_grad[0:2])))*0.01
         cmd_vel.linear.y = max(-3,min(3, Kp*U_grad[1]/np.linalg.norm(U_grad[0:2])))*0.01
         #cmd_vel.linear.y = 0
-        cmd_vel.angular.z = max(-2, min(2, -Kt*theta))*0.01
+        #cmd_vel.angular.z = max(-2, min(2, -Kt*theta))*0.01
         
         
         return cmd_vel
