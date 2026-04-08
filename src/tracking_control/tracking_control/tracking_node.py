@@ -70,6 +70,7 @@ class TrackingNode(Node):
         self.goal_pose = None
         
         self.state = "Goal"
+        self.first = True
 
         # ROS parameters
         self.declare_parameter('world_frame_id', 'odom')
@@ -232,6 +233,9 @@ class TrackingNode(Node):
 
         cmd_vel = self.controller(current_obs_pose, current_goal_pose)
         
+        if self.first:
+            self.start = np.array([self.robot_world_x, self.robot_world_y, self.robot_world_z])
+            self.first = False
 
         ################################################################### ^
         
@@ -264,13 +268,13 @@ class TrackingNode(Node):
         pose = np.array([self.robot_world_x, self.robot_world_y, self.robot_world_z])
         print("pose:", pose)
 
-        world_goal_pose = self.robot_world_R@self.goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
-        #world_goal_pose = goal_pose
+        #world_goal_pose = self.robot_world_R@self.goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
+        world_goal_pose = goal_pose
         print("goal:", world_goal_pose)
 
 
         if self.state == "Home":
-            world_goal_pose = np.array([0,0,0])
+            world_goal_pose = self.start
 
         if np.sqrt((dis_goal[0])**2 + (dis_goal[1])**2) < 0.3:
             print("close to goal")
@@ -288,9 +292,10 @@ class TrackingNode(Node):
         #Potential Field
         U_grad = zetta * dis_goal
         #print(dis_goal)
-        if not obs_pose is None:
-            world_obs_pose = self.robot_world_R@self.obs_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
-            #world_obs_pose = obs_pose
+        #if not obs_pose is None:
+        if not obs_pose == False:
+            #world_obs_pose = self.robot_world_R@self.obs_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
+            world_obs_pose = obs_pose
             print("obs:", world_obs_pose)
             if np.sqrt((world_obs_pose[0])**2 + (world_obs_pose[1])**2) < Q:
                 
@@ -298,11 +303,11 @@ class TrackingNode(Node):
                 U_grad = U_grad - 0.5*n*(1/Q - 1/dis_obj)*1/dis_obj**2*(dis_obj/np.linalg.norm(dis_obj))
         
             print(U_grad)
-            
+
         theta = np.arctan2(dis_goal[1], dis_goal[0])
         cmd_vel = Twist()
-        cmd_vel.linear.x = max(-2,min(2, Kp*U_grad[0]/np.linalg.norm(U_grad[0:2])))*0.01
-        cmd_vel.linear.y = max(-3,min(3, Kp*U_grad[1]/np.linalg.norm(U_grad[0:2])))*0.01
+        cmd_vel.linear.x = max(-0.20,min(0.20, Kp*U_grad[0]/np.linalg.norm(U_grad[0:2])))
+        cmd_vel.linear.y = max(-0.30,min(0.30, Kp*U_grad[1]/np.linalg.norm(U_grad[0:2])))
         #cmd_vel.linear.y = 0
         #cmd_vel.angular.z = max(-2, min(2, -Kt*theta))*0.01
         
