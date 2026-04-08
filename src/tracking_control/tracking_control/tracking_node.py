@@ -70,7 +70,7 @@ class TrackingNode(Node):
         self.goal_pose = None
         
         self.state = "Goal"
-        self.first = True
+        self.start = None
 
         # ROS parameters
         self.declare_parameter('world_frame_id', 'odom')
@@ -233,9 +233,8 @@ class TrackingNode(Node):
 
         cmd_vel = self.controller(current_obs_pose, current_goal_pose)
         
-        if self.first:
+        if self.start is None:
             self.start = np.array([self.robot_world_x, self.robot_world_y, self.robot_world_z])
-            self.first = False
 
         ################################################################### ^
         
