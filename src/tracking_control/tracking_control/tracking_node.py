@@ -4,6 +4,7 @@ from geometry_msgs.msg import Twist, PoseStamped
 from tf2_ros import TransformException, Buffer, TransformListener
 import numpy as np
 import math
+import time
 
 ## Functions for quaternion and rotation matrix conversion
 ## The code is adapted from the general_robotics_toolbox package
@@ -284,6 +285,7 @@ class TrackingNode(Node):
             cmd_vel.linear.y = 0.
             cmd_vel.angular.z = 0.
             self.state = "Home"
+            time.sleep(3)
             return cmd_vel
             
 
@@ -308,8 +310,8 @@ class TrackingNode(Node):
 
         theta = np.arctan2(dis_goal[1], dis_goal[0])
         cmd_vel = Twist()
-        cmd_vel.linear.x = max(-0.10,min(0.10, Kp*U_grad[0]/np.linalg.norm(U_grad[0:2])))
-        cmd_vel.linear.y = max(-0.30,min(0.30, 1*U_grad[1]/np.linalg.norm(U_grad[0:2])))
+        cmd_vel.linear.x = max(-0.05,min(0.05, Kp*U_grad[0]/np.linalg.norm(U_grad[0:2])))
+        cmd_vel.linear.y = max(-0.05,min(0.05, 1*U_grad[1]/np.linalg.norm(U_grad[0:2])))
         #cmd_vel.linear.y = 0
         #cmd_vel.angular.z = max(-2, min(2, -Kt*theta))*0.01
         
