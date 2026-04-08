@@ -314,7 +314,7 @@ class TrackingNode(Node):
         #cmd_vel.linear.y = 0
         #cmd_vel.angular.z = max(-2, min(2, -Kt*theta))*0.01
         
-        
+        self.get_logger().warn(cmd_vel)
         return cmd_vel
     
        ################################################################### ^
