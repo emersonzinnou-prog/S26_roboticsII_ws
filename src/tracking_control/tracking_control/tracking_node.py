@@ -300,8 +300,8 @@ class TrackingNode(Node):
             world_obs_pose = obs_pose
             print("obs:", world_obs_pose)
             dis_obj = pose - world_obs_pose
-            if np.linalg.norm(dis_obj) - 0.25 < Q:
-                U_grad = U_grad - 0.5*n*(1/Q - 1/(np.linalg.norm(dis_obj)-0.25))*1/(np.linalg.norm(dis_obj)-0.25)**2*dis_obj/(np.linalg.norm(dis_obj))
+            if np.linalg.norm(dis_obj) - 0.1 < Q:
+                U_grad = U_grad - 0.5*n*(1/Q - 1/(np.linalg.norm(dis_obj)-0.1))*1/(np.linalg.norm(dis_obj)-0.1)**2*dis_obj/(np.linalg.norm(dis_obj))
         
         print(U_grad)
         #U_grad = self.robot_world_R@U_grad
