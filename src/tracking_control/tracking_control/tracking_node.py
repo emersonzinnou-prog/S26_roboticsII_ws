@@ -270,6 +270,12 @@ class TrackingNode(Node):
 
         if np.sqrt((world_goal_pose[0] - pose[0])**2 + (world_goal_pose[1] - pose[1])**2) < 0.3:
             print("close to goal")
+            cmd_vel = Twist()
+            cmd_vel.linear.x = 0
+            cmd_vel.linear.y = 0
+            cmd_vel.angular.z = 0
+            return cmd_vel
+            
 
         #theta = np.arctan2(goal_pose[1], goal_pose[0])
 
