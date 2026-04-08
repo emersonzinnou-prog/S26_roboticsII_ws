@@ -261,7 +261,7 @@ class TrackingNode(Node):
         Kp = 2
         Kt = 0.5
         zetta = 1
-        n = 2
+        n = 3
         Q = 0.3
 
         pose = self.robot_world_R@np.array([-self.robot_world_x, -self.robot_world_y, self.robot_world_z])
@@ -303,13 +303,13 @@ class TrackingNode(Node):
                 U_grad = U_grad - 0.5*n*(1/Q - 1/dis_obj)*1/dis_obj**2*(dis_obj/np.linalg.norm(dis_obj))
         
         print(U_grad)
-        U_grad = self.robot_world_R@U_grad
+        #U_grad = self.robot_world_R@U_grad
         
 
         theta = np.arctan2(dis_goal[1], dis_goal[0])
         cmd_vel = Twist()
         cmd_vel.linear.x = max(-0.10,min(0.10, Kp*U_grad[0]/np.linalg.norm(U_grad[0:2])))
-        cmd_vel.linear.y = max(-0.20,min(0.30, Kp*U_grad[1]/np.linalg.norm(U_grad[0:2])))
+        cmd_vel.linear.y = max(-0.30,min(0.30, 5*U_grad[1]/np.linalg.norm(U_grad[0:2])))
         #cmd_vel.linear.y = 0
         #cmd_vel.angular.z = max(-2, min(2, -Kt*theta))*0.01
         
