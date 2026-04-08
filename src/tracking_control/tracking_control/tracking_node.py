@@ -276,6 +276,8 @@ class TrackingNode(Node):
         if self.state == "Home":
             world_goal_pose = self.start
 
+        dis_goal = (world_goal_pose - pose)
+        
         if np.sqrt((dis_goal[0])**2 + (dis_goal[1])**2) < 0.3:
             print("close to goal")
             cmd_vel = Twist()
@@ -285,7 +287,6 @@ class TrackingNode(Node):
             self.state = "Home"
             return cmd_vel
             
-        dis_goal = (world_goal_pose - pose)
 
         #theta = np.arctan2(goal_pose[1], goal_pose[0])
 
