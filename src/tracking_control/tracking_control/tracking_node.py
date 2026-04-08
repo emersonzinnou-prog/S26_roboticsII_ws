@@ -267,8 +267,8 @@ class TrackingNode(Node):
         pose = self.robot_world_R@np.array([-self.robot_world_x, -self.robot_world_y, self.robot_world_z])
         print("pose:", pose)
 
-        world_goal_pose = self.robot_world_R@self.goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
-        #world_goal_pose = goal_pose
+        #world_goal_pose = self.robot_world_R@self.goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
+        world_goal_pose = goal_pose
         print("goal:", world_goal_pose)
 
 
@@ -294,8 +294,8 @@ class TrackingNode(Node):
         #print(dis_goal)
         
         if not obs_pose is None:
-            world_obs_pose = self.robot_world_R@self.obs_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
-            #world_obs_pose = obs_pose
+            #world_obs_pose = self.robot_world_R@self.obs_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
+            world_obs_pose = obs_pose
             print("obs:", world_obs_pose)
             if np.sqrt((world_obs_pose[0])**2 + (world_obs_pose[1])**2) < Q:
                 
