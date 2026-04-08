@@ -69,7 +69,8 @@ class TrackingNode(Node):
         self.obs_pose = None
         self.goal_pose = None
         
-        
+        self.state = "Goal"
+
         # ROS parameters
         self.declare_parameter('world_frame_id', 'odom')
 
@@ -267,7 +268,9 @@ class TrackingNode(Node):
         #world_goal_pose = goal_pose
         print("goal:", world_goal_pose)
 
-        dis_goal = (world_goal_pose - pose)
+
+        if self.state == "Home":
+            world_goal_pose = np.array([0,0,0])
 
         if np.sqrt((dis_goal[0])**2 + (dis_goal[1])**2) < 0.3:
             print("close to goal")
@@ -275,8 +278,10 @@ class TrackingNode(Node):
             cmd_vel.linear.x = 0
             cmd_vel.linear.y = 0
             cmd_vel.angular.z = 0
+            self.state = "Home"
             return cmd_vel
             
+        dis_goal = (world_goal_pose - pose)
 
         #theta = np.arctan2(goal_pose[1], goal_pose[0])
 
@@ -293,6 +298,7 @@ class TrackingNode(Node):
                 U_grad = U_grad - 0.5*n*(1/Q - 1/dis_obj)*1/dis_obj**2*(dis_obj/np.linalg.norm(dis_obj))
         
             print(U_grad)
+            
         theta = np.arctan2(dis_goal[1], dis_goal[0])
         cmd_vel = Twist()
         cmd_vel.linear.x = max(-2,min(2, Kp*U_grad[0]/np.linalg.norm(U_grad[0:2])))*0.01
