@@ -101,25 +101,40 @@ class TrackingNode(Node):
 
     def get_current_poses(self):
         odom_id = self.get_parameter('world_frame_id').get_parameter_value().string_value
-        
+    
         try:
-            transform = self.tf_buffer.lookup_transform('base_footprint', odom_id, rclpy.time.Time())
-            robot_world_x = transform.transform.translation.x
-            robot_world_y = transform.transform.translation.y
-            robot_world_z = transform.transform.translation.z
+            # Get robot pose in the world (odom) frame
+            transform = self.tf_buffer.lookup_transform(
+                odom_id,
+                'base_footprint',
+                rclpy.time.Time()
+            )
+    
+            robot_world_pos = np.array([
+                transform.transform.translation.x,
+                transform.transform.translation.y,
+                transform.transform.translation.z
+            ])
+    
             robot_world_R = q2R(np.array([
                 transform.transform.rotation.w,
                 transform.transform.rotation.x,
                 transform.transform.rotation.y,
                 transform.transform.rotation.z
             ]))
-            object_pose = robot_world_R @ self.obs_pose + np.array([robot_world_x, robot_world_y, robot_world_z])
-
+    
+            # self.obs_pose is already stored in odom/world frame
+            # so first get vector from robot to object in world frame
+            rel_world = self.obs_pose - robot_world_pos
+    
+            # Convert that world-frame vector into robot frame
+            object_pose_robot = robot_world_R.T @ rel_world
+    
         except TransformException as e:
             self.get_logger().error('Transform error: ' + str(e))
             return None
-        
-        return object_pose
+    
+        return object_pose_robot
     
     def timer_update(self):
         if self.obs_pose is None:
