@@ -166,9 +166,9 @@ class TrackingNode(Node):
         heading_error = math.atan2(y, x)
         distance = math.sqrt(x**2 + y**2)
 
-        stop_distance = 0.4
-        k_linear = 0.3
-        k_angular = 1.0
+        stop_distance = 0.25
+        k_linear = 0.6
+        k_angular = 2.0
 
         cmd_vel.angular.z = k_angular * heading_error
 
