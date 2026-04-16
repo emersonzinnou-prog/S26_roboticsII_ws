@@ -160,15 +160,16 @@ class TrackingNode(Node):
         heading_error = math.atan2(y, x)
         distance = math.sqrt(x**2 + y**2)
     
-        stop_distance = 0.1
-        k_linear = 0.3
+        stop_distance = 0.15
+        k_linear = 0.25
         k_angular = 1.0
     
         cmd_vel.angular.z = k_angular * heading_error
     
-        # Only move forward when mostly facing the object
-        if distance > stop_distance and abs(heading_error) < 0.2:
-            cmd_vel.linear.x = k_linear * (distance - stop_distance)
+        # Move forward whenever outside stop distance,
+        # but slow down forward motion if badly misaligned
+        if distance > stop_distance:
+            cmd_vel.linear.x = k_linear * (distance - stop_distance) * max(0.0, math.cos(heading_error))
         else:
             cmd_vel.linear.x = 0.0
     
