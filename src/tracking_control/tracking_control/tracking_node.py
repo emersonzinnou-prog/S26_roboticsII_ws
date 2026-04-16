@@ -259,8 +259,8 @@ class TrackingNode(Node):
         #return cmd_vel
 
         #new code:
-        Kp = 2
-        Kt = 0.5
+        K_v = 1
+        K_h = 10
         zetta = 1
         n = 0.5
         Q = 0.6
@@ -305,14 +305,22 @@ class TrackingNode(Node):
         
         print(U_grad)
         #U_grad = self.robot_world_R@U_grad
-        
 
-        theta = np.arctan2(dis_goal[1], dis_goal[0])
+        v_star = np.array([min(2, max(-2, K_v *U_grad[0])),min(2, max(-2, K_v *U_grad[1]))])
+        theta_star = np.arctan2(dis_goal[1],dis_goal[0])
+
+        #gamma_star = K_h * max(-np.pi/2, min(np.pi/2, theta_star))
+        gamma_star = 0
+        
+        delta_t = 0.01
+
+        u = [v_star[0] * delta_t,
+            v_star[1] * delta_t,
+            gamma_star * delta_t]
         cmd_vel = Twist()
-        cmd_vel.linear.x = max(-0.05,min(0.05, Kp*U_grad[0]/np.linalg.norm(U_grad[0:2])))
-        cmd_vel.linear.y = max(-0.15,min(0.15, 0.6*U_grad[1]/np.linalg.norm(U_grad[0:2])))
-        #cmd_vel.linear.y = 0
-        #cmd_vel.angular.z = max(-2, min(2, -Kt*theta))*0.01
+        cmd_vel.linear.x = u[0]
+        cmd_vel.linear.y = u[1]
+        cmd_vel.angular.z = u[2]
         
         
         return cmd_vel
