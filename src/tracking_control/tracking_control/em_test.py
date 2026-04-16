@@ -160,7 +160,7 @@ class TrackingNode(Node):
         heading_error = math.atan2(y, x)
         distance = math.sqrt(x**2 + y**2)
     
-        stop_distance = 0.4
+        stop_distance = 0.1
         k_linear = 0.3
         k_angular = 1.0
     
