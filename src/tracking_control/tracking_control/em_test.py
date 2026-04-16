@@ -153,24 +153,25 @@ class TrackingNode(Node):
     
     def controller(self, obs_pose):
         cmd_vel = Twist()
-
+    
         x = obs_pose[0]
         y = obs_pose[1]
-
+    
         heading_error = math.atan2(y, x)
         distance = math.sqrt(x**2 + y**2)
-
+    
         stop_distance = 0.4
         k_linear = 0.3
         k_angular = 1.0
-
+    
         cmd_vel.angular.z = k_angular * heading_error
-
-        if distance > stop_distance:
+    
+        # Only move forward when mostly facing the object
+        if distance > stop_distance and abs(heading_error) < 0.2:
             cmd_vel.linear.x = k_linear * (distance - stop_distance)
         else:
             cmd_vel.linear.x = 0.0
-
+    
         return cmd_vel
 
 def main(args=None):
