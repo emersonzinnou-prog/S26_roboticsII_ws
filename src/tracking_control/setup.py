@@ -26,6 +26,8 @@ setup(
             'tracking_node = tracking_control.tracking_node:main',
             'joy_safety_ctrl = tracking_control.joy_safety_ctrl:main',
             'wheelodom_tf = tracking_control.wheelodom_tf:main',
+            'tracking_node_sanjay = tracking_control.tracking_node_sanj:main',
+            'em_test_go = tracking_control.em_test:main',
         ],
     },
 )
