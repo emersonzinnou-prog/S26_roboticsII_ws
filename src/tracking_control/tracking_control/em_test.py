@@ -29,6 +29,7 @@ def q2R(q):
     qhat2 = qhat.dot(qhat)
     return I + 2 * q[0] * qhat + 2 * qhat2
 
+
 class TrackingNode(Node):
     def __init__(self):
         super().__init__('tracking_node')
@@ -180,7 +181,7 @@ class TrackingNode(Node):
         self.pub_control_cmd.publish(cmd_vel)
 
     def search_controller(self):
-        """Spin in place until the object is detected"""
+        """Spin in place quickly until the object is detected"""
         cmd_vel = Twist()
         cmd_vel.linear.x = 0.0
         cmd_vel.angular.z = 2.5
@@ -195,19 +196,30 @@ class TrackingNode(Node):
 
         heading_error = math.atan2(y, x)
         distance = math.sqrt(x**2 + y**2)
+        abs_error = abs(heading_error)
 
-        """Distance rule from your new logic"""
+        """Distance rule"""
         stop_distance = 0.2
 
-        """Drive/turn tuning"""
-        k_angular = 1.8
+        """Forward motion tuning"""
         k_linear = 0.45
-
-        max_angular = 1.2
         max_linear = 0.30
         min_linear = 0.08
 
-        """Always turn to center object in camera view / robot frame"""
+        """Angular tuning:
+        turn strongly when far off-center,
+        turn gently when nearly centered
+        """
+        if abs_error > 0.5:
+            k_angular = 1.2
+            max_angular = 0.9
+        elif abs_error > 0.2:
+            k_angular = 0.7
+            max_angular = 0.5
+        else:
+            k_angular = 0.35
+            max_angular = 0.2
+
         cmd_vel.angular.z = k_angular * heading_error
 
         if cmd_vel.angular.z > max_angular:
@@ -227,6 +239,7 @@ class TrackingNode(Node):
                 cmd_vel.linear.x = min_linear
 
         return cmd_vel
+
 
 def main(args=None):
     rclpy.init(args=args)
