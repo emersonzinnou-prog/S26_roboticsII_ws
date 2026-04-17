@@ -183,7 +183,7 @@ class TrackingNode(Node):
         """Spin in place until the object is detected"""
         cmd_vel = Twist()
         cmd_vel.linear.x = 0.0
-        cmd_vel.angular.z = 0.6
+        cmd_vel.angular.z = 2.5
         return cmd_vel
 
     def track_controller(self, obs_pose):
