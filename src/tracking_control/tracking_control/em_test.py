@@ -167,8 +167,8 @@ class TrackingNode(Node):
         distance = math.sqrt(x**2 + y**2)
 
         stop_distance = 0.4
-        k_linear = 0.5
-        k_angular = 2
+        k_linear = 0.6
+        k_angular = 1.7
 
         cmd_vel.angular.z = k_angular * heading_error
 
