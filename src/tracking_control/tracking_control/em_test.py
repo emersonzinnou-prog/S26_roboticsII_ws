@@ -29,23 +29,25 @@ def q2R(q):
     qhat2 = qhat.dot(qhat)
     return I + 2 * q[0] * qhat + 2 * qhat2
 
-def euler_from_quaternion(q):
-    w = q[0]
-    x = q[1]
-    y = q[2]
-    z = q[3]
-    roll = math.atan2(2 * (w * x + y * z), 1 - 2 * (x * x + y * y))
-    pitch = math.asin(2 * (w * y - z * x))
-    yaw = math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z))
-    return [roll, pitch, yaw]
-
 class TrackingNode(Node):
     def __init__(self):
         super().__init__('tracking_node')
         self.get_logger().info('Tracking Node Started')
 
-        """Latest detected orange-object pose in world frame"""
+        """Latest detected object pose in world frame"""
         self.obs_pose = None
+
+        """Whether we currently consider the object visible"""
+        self.object_visible = False
+
+        """Low-pass filter for pose smoothing
+        Smaller alpha = smoother, larger alpha = more responsive
+        """
+        self.filter_alpha = 0.25
+
+        """How long we trust the last detection before saying object is lost"""
+        self.target_timeout = 0.3
+        self.last_seen_time = None
 
         """ROS parameters"""
         self.declare_parameter('world_frame_id', 'odom')
@@ -57,7 +59,7 @@ class TrackingNode(Node):
         """Velocity publisher"""
         self.pub_control_cmd = self.create_publisher(Twist, '/track_cmd_vel', 10)
 
-        """Subscribe only to the orange object pose"""
+        """Subscribe to detected object pose"""
         self.sub_detected_object_pose = self.create_subscription(
             PoseStamped,
             'detected_color_object_pose',
@@ -69,7 +71,7 @@ class TrackingNode(Node):
         self.timer = self.create_timer(0.01, self.timer_update)
 
     def detected_obs_pose_callback(self, msg):
-        """Convert detected orange blob position into world frame"""
+        """Convert detected object position into world frame and store it"""
         odom_id = self.get_parameter('world_frame_id').get_parameter_value().string_value
         center_points = np.array([
             msg.pose.position.x,
@@ -102,8 +104,23 @@ class TrackingNode(Node):
             self.get_logger().error('Transform Error: {}'.format(e))
             return
 
-        """Always use the latest orange blob that is published"""
-        self.obs_pose = cp_world
+        """Filter the pose so tracking is less jumpy"""
+        if self.obs_pose is None:
+            self.obs_pose = cp_world
+        else:
+            self.obs_pose = self.filter_alpha * cp_world + (1.0 - self.filter_alpha) * self.obs_pose
+
+        """Mark object as visible and refresh last-seen time"""
+        self.object_visible = True
+        self.last_seen_time = self.get_clock().now()
+
+    def object_recently_seen(self):
+        """Return True if the object was seen recently enough to still track it"""
+        if self.last_seen_time is None:
+            return False
+
+        dt = (self.get_clock().now() - self.last_seen_time).nanoseconds / 1e9
+        return dt <= self.target_timeout
 
     def get_current_object_pose_in_robot_frame(self):
         """Convert saved world-frame object pose into robot frame"""
@@ -140,24 +157,37 @@ class TrackingNode(Node):
         return object_pose
 
     def timer_update(self):
-        """If no orange object is detected, stop. Otherwise follow it."""
+        """Main behavior logic:
+        1. If object is not seen, spin in place to search.
+        2. If object is seen, turn to center it while driving toward it.
+        3. Stop forward motion once within 0.2 m.
+        """
         cmd_vel = Twist()
 
-        if self.obs_pose is None:
-            cmd_vel.linear.x = 0.0
-            cmd_vel.angular.z = 0.0
+        """If no recent detection, go into search mode"""
+        if (self.obs_pose is None) or (not self.object_recently_seen()):
+            self.object_visible = False
+            cmd_vel = self.search_controller()
             self.pub_control_cmd.publish(cmd_vel)
             return
 
+        """Object is visible, so track it"""
         current_obs_pose = self.get_current_object_pose_in_robot_frame()
         if current_obs_pose is None:
             return
 
-        cmd_vel = self.controller(current_obs_pose)
+        cmd_vel = self.track_controller(current_obs_pose)
         self.pub_control_cmd.publish(cmd_vel)
 
-    def controller(self, obs_pose):
-        """Simple proportional controller to face and approach orange object"""
+    def search_controller(self):
+        """Spin in place until the object is detected"""
+        cmd_vel = Twist()
+        cmd_vel.linear.x = 0.0
+        cmd_vel.angular.z = 0.6
+        return cmd_vel
+
+    def track_controller(self, obs_pose):
+        """Turn to center object while driving toward it"""
         cmd_vel = Twist()
 
         x = obs_pose[0]
@@ -166,16 +196,35 @@ class TrackingNode(Node):
         heading_error = math.atan2(y, x)
         distance = math.sqrt(x**2 + y**2)
 
-        stop_distance = 0.3
-        k_linear = 0.4
-        k_angular = 1.5
+        """Distance rule from your new logic"""
+        stop_distance = 0.2
 
+        """Drive/turn tuning"""
+        k_angular = 1.8
+        k_linear = 0.45
+
+        max_angular = 1.2
+        max_linear = 0.30
+        min_linear = 0.08
+
+        """Always turn to center object in camera view / robot frame"""
         cmd_vel.angular.z = k_angular * heading_error
 
-        if distance > stop_distance:
-            cmd_vel.linear.x = k_linear * (distance - stop_distance)
-        else:
+        if cmd_vel.angular.z > max_angular:
+            cmd_vel.angular.z = max_angular
+        elif cmd_vel.angular.z < -max_angular:
+            cmd_vel.angular.z = -max_angular
+
+        """Drive toward object until 0.2 m away"""
+        if distance <= stop_distance:
             cmd_vel.linear.x = 0.0
+        else:
+            cmd_vel.linear.x = k_linear * (distance - stop_distance)
+
+            if cmd_vel.linear.x > max_linear:
+                cmd_vel.linear.x = max_linear
+            elif cmd_vel.linear.x < min_linear:
+                cmd_vel.linear.x = min_linear
 
         return cmd_vel
 
