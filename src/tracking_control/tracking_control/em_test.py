@@ -190,54 +190,83 @@ class TrackingNode(Node):
     def track_controller(self, obs_pose):
         """Turn to center object while driving toward it"""
         cmd_vel = Twist()
-
+    
         x = obs_pose[0]
         y = obs_pose[1]
-
+    
         heading_error = math.atan2(y, x)
         distance = math.sqrt(x**2 + y**2)
         abs_error = abs(heading_error)
-
-        """Distance rule"""
+    
+        """Distance rules"""
         stop_distance = 0.2
-
+        close_distance = 0.3
+    
         """Forward motion tuning"""
         k_linear = 0.45
         max_linear = 0.30
         min_linear = 0.08
-
-        """Angular tuning:
-        turn strongly when far off-center,
-        turn gently when nearly centered
+    
         """
-        if abs_error > 0.5:
-            k_angular = 1.2
-            max_angular = 0.9
-        elif abs_error > 0.2:
-            k_angular = 0.7
-            max_angular = 0.5
-        else:
-            k_angular = 0.35
-            max_angular = 0.2
-
-        cmd_vel.angular.z = k_angular * heading_error
-
-        if cmd_vel.angular.z > max_angular:
-            cmd_vel.angular.z = max_angular
-        elif cmd_vel.angular.z < -max_angular:
-            cmd_vel.angular.z = -max_angular
-
-        """Drive toward object until 0.2 m away"""
+        When close to the object, do not keep spinning around trying to
+        perfectly center it. Just stop forward motion at stop_distance,
+        and strongly reduce turning once inside close_distance.
+        """
         if distance <= stop_distance:
             cmd_vel.linear.x = 0.0
+            cmd_vel.angular.z = 0.0
+            return cmd_vel
+    
+        """Forward drive"""
+        cmd_vel.linear.x = k_linear * (distance - stop_distance)
+    
+        if cmd_vel.linear.x > max_linear:
+            cmd_vel.linear.x = max_linear
+        elif cmd_vel.linear.x < min_linear:
+            cmd_vel.linear.x = min_linear
+    
+        """Angular control"""
+        if distance <= close_distance:
+            """
+            Close to object:
+            - turn much more gently
+            - ignore tiny centering error caused by noise
+            """
+            if abs_error < 0.12:
+                cmd_vel.angular.z = 0.0
+            else:
+                k_angular = 0.25
+                max_angular = 0.15
+                cmd_vel.angular.z = k_angular * heading_error
+    
+                if cmd_vel.angular.z > max_angular:
+                    cmd_vel.angular.z = max_angular
+                elif cmd_vel.angular.z < -max_angular:
+                    cmd_vel.angular.z = -max_angular
+    
         else:
-            cmd_vel.linear.x = k_linear * (distance - stop_distance)
-
-            if cmd_vel.linear.x > max_linear:
-                cmd_vel.linear.x = max_linear
-            elif cmd_vel.linear.x < min_linear:
-                cmd_vel.linear.x = min_linear
-
+            """
+            Farther away:
+            - stronger turning when object is off-center
+            - gentler turning when nearly centered
+            """
+            if abs_error > 0.5:
+                k_angular = 1.2
+                max_angular = 0.9
+            elif abs_error > 0.2:
+                k_angular = 0.7
+                max_angular = 0.5
+            else:
+                k_angular = 0.35
+                max_angular = 0.2
+    
+            cmd_vel.angular.z = k_angular * heading_error
+    
+            if cmd_vel.angular.z > max_angular:
+                cmd_vel.angular.z = max_angular
+            elif cmd_vel.angular.z < -max_angular:
+                cmd_vel.angular.z = -max_angular
+    
         return cmd_vel
 
 
