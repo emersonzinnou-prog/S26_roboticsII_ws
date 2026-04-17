@@ -47,6 +47,12 @@ class TrackingNode(Node):
         """Latest detected orange-object pose in world frame"""
         self.obs_pose = None
 
+        """Low-pass filter strength for object pose
+        smaller = smoother but slower response
+        larger = more responsive but more jumpy
+        """
+        self.filter_alpha = 0.2
+
         """ROS parameters"""
         self.declare_parameter('world_frame_id', 'odom')
 
@@ -102,8 +108,11 @@ class TrackingNode(Node):
             self.get_logger().error('Transform Error: {}'.format(e))
             return
 
-        """Always use the latest orange blob that is published"""
-        self.obs_pose = cp_world
+        """Filter the detected pose so far-away noisy measurements do not cause jumpy motion"""
+        if self.obs_pose is None:
+            self.obs_pose = cp_world
+        else:
+            self.obs_pose = self.filter_alpha * cp_world + (1.0 - self.filter_alpha) * self.obs_pose
 
     def get_current_object_pose_in_robot_frame(self):
         """Convert saved world-frame object pose into robot frame"""
@@ -157,7 +166,7 @@ class TrackingNode(Node):
         self.pub_control_cmd.publish(cmd_vel)
 
     def controller(self, obs_pose):
-        """Simple proportional controller to face and approach orange object"""
+        """Simple filtered proportional controller to face and approach orange object"""
         cmd_vel = Twist()
 
         x = obs_pose[0]
@@ -166,16 +175,42 @@ class TrackingNode(Node):
         heading_error = math.atan2(y, x)
         distance = math.sqrt(x**2 + y**2)
 
-        stop_distance = 0.3
-        k_linear = 0.5
-        k_angular = 1.5
+        """Distance settings"""
+        stop_distance = 0.25
+        slow_distance = 0.40
 
+        """Controller gains"""
+        k_linear = 0.30
+        k_angular = 1.0
+
+        """Speed limits"""
+        max_linear = 0.25
+        max_angular = 1.0
+        min_linear = 0.06
+
+        """Turn toward object"""
         cmd_vel.angular.z = k_angular * heading_error
 
-        if distance > stop_distance:
-            cmd_vel.linear.x = k_linear * (distance - stop_distance)
-        else:
+        """Clamp turning speed so it does not snap too hard"""
+        if cmd_vel.angular.z > max_angular:
+            cmd_vel.angular.z = max_angular
+        elif cmd_vel.angular.z < -max_angular:
+            cmd_vel.angular.z = -max_angular
+
+        """Forward motion with a slow zone to reduce start/stop jitter"""
+        if distance <= stop_distance:
             cmd_vel.linear.x = 0.0
+
+        elif distance <= slow_distance:
+            cmd_vel.linear.x = min_linear
+
+        else:
+            cmd_vel.linear.x = k_linear * (distance - stop_distance)
+
+            if cmd_vel.linear.x > max_linear:
+                cmd_vel.linear.x = max_linear
+            elif cmd_vel.linear.x < min_linear:
+                cmd_vel.linear.x = min_linear
 
         return cmd_vel
 
