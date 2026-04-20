@@ -263,7 +263,7 @@ class TrackingNode(Node):
         K_h = 10
         zetta = 1
         n = 0.5
-        Q = 0.6
+        Q = 2
 
         pose = self.robot_world_R@np.array([-self.robot_world_x, -self.robot_world_y, self.robot_world_z])
         print("pose:", pose)
@@ -272,24 +272,7 @@ class TrackingNode(Node):
         world_goal_pose = goal_pose
         print("goal:", world_goal_pose)
 
-
-        if self.state == "Home":
-            world_goal_pose = self.start
-
-        dis_goal = (pose - world_goal_pose)
-
-        if np.sqrt((dis_goal[0])**2 + (dis_goal[1])**2) < 0.3:
-            print("close to goal")
-            cmd_vel = Twist()
-            cmd_vel.linear.x = 0.
-            cmd_vel.linear.y = 0.
-            cmd_vel.angular.z = 0.
-            self.state = "Home"
-            time.sleep(3)
-            return cmd_vel
-            
-
-        #theta = np.arctan2(goal_pose[1], goal_pose[0])
+        dis_goal = (world_goal_pose - pose) 
 
         #Potential Field
         U_grad = zetta * dis_goal
@@ -300,8 +283,9 @@ class TrackingNode(Node):
             world_obs_pose = goal_pose
             print("obs:", world_obs_pose)
             dis_obj = pose - world_obs_pose
-            if np.linalg.norm(dis_obj) - 0.05 < Q:
-                U_grad = U_grad - 0.5*n*(1/Q - 1/(np.linalg.norm(dis_obj)-0.05))*1/(np.linalg.norm(dis_obj)-0.05)**2*dis_obj/(np.linalg.norm(dis_obj))
+            radius = 0.2
+            if np.linalg.norm(dis_obj) - radius < Q:
+                U_grad = U_grad - 0.5*n*(1/Q - 1/(np.linalg.norm(dis_obj)-radius))*1/(np.linalg.norm(dis_obj)-radius)**2*dis_obj/(np.linalg.norm(dis_obj))
         
         print(U_grad)
         #U_grad = self.robot_world_R@U_grad
