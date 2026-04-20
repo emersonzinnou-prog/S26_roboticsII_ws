@@ -226,47 +226,29 @@ class TrackingNode(Node):
             cmd_vel.linear.x = min_linear
     
         """Angular control"""
-        if distance <= close_distance:
-            """
-            Close to object:
-            - turn much more gently
-            - ignore tiny centering error caused by noise
-            """
-            if abs_error < 0.12:
-                cmd_vel.angular.z = 0.0
-            else:
-                k_angular = 0.25
-                max_angular = 0.15
-                cmd_vel.angular.z = k_angular * heading_error
-    
-                if cmd_vel.angular.z > max_angular:
-                    cmd_vel.angular.z = max_angular
-                elif cmd_vel.angular.z < -max_angular:
-                    cmd_vel.angular.z = -max_angular
-    
+
+        """
+        Farther away:
+        - stronger turning when object is off-center
+        - gentler turning when nearly centered
+        """
+        if abs_error > 0.5:
+            k_angular = 1.2
+            max_angular = 0.9
+        elif abs_error > 0.2:
+            k_angular = 0.7
+            max_angular = 0.5
         else:
-            """
-            Farther away:
-            - stronger turning when object is off-center
-            - gentler turning when nearly centered
-            """
-            if abs_error > 0.5:
-                k_angular = 1.2
-                max_angular = 0.9
-            elif abs_error > 0.2:
-                k_angular = 0.7
-                max_angular = 0.5
-            else:
-                k_angular = 0.35
-                max_angular = 0.2
-    
-            cmd_vel.angular.z = k_angular * heading_error
-    
-            if cmd_vel.angular.z > max_angular:
-                cmd_vel.angular.z = max_angular
-            elif cmd_vel.angular.z < -max_angular:
-                cmd_vel.angular.z = -max_angular
-    
+            k_angular = 0.35
+            max_angular = 0.2
+
+        cmd_vel.angular.z = k_angular * heading_error
+
+        if cmd_vel.angular.z > max_angular:
+            cmd_vel.angular.z = max_angular
+        elif cmd_vel.angular.z < -max_angular:
+            cmd_vel.angular.z = -max_angular
+
         return cmd_vel
 
 
