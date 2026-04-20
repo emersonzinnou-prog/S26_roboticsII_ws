@@ -116,12 +116,9 @@ class TrackingNode(Node):
                 rclpy.time.Time()
             )
 
-            """Robot pose in world coordinates"""
-            robot_world_t = np.array([
-                transform.transform.translation.x,
-                transform.transform.translation.y,
-                transform.transform.translation.z
-            ])
+            robot_world_x = transform.transform.translation.x
+            robot_world_y = transform.transform.translation.y
+            robot_world_z = transform.transform.translation.z
 
             robot_world_R = q2R(np.array([
                 transform.transform.rotation.w,
@@ -130,21 +127,11 @@ class TrackingNode(Node):
                 transform.transform.rotation.z
             ]))
 
-            """
-            OLD CODE (kept for reference)
             object_pose = robot_world_R @ self.obs_pose + np.array([
                 robot_world_x,
                 robot_world_y,
                 robot_world_z
             ])
-            """
-
-            """
-            NEW CODE
-            First subtract robot world position from object world position,
-            then rotate that relative vector into robot frame.
-            """
-            object_pose = robot_world_R @ (self.obs_pose - robot_world_t)
 
         except TransformException as e:
             self.get_logger().error('Transform error: ' + str(e))
@@ -183,25 +170,12 @@ class TrackingNode(Node):
         k_linear = 0.4
         k_angular = 1.5
 
-        """
-        When the object gets close, heading can jump around a lot.
-        So reduce turning gain nearby to make motion smoother.
-        """
-        if distance < 0.45:
-            k_angular = 0.6
-
         cmd_vel.angular.z = k_angular * heading_error
 
         if distance > stop_distance:
             cmd_vel.linear.x = k_linear * (distance - stop_distance)
         else:
-            """
-            Once close enough, stop.
-            This prevents the robot from doing weird last-second turns
-            when the object is right near it.
-            """
             cmd_vel.linear.x = 0.0
-            cmd_vel.angular.z = 0.0
 
         return cmd_vel
 
