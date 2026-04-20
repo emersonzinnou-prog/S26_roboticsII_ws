@@ -295,9 +295,9 @@ class TrackingNode(Node):
         U_grad = zetta * dis_goal
         #print(dis_goal)
         
-        if not obs_pose is None:
+        if not goal_pose is None:
             #world_obs_pose = self.robot_world_R@self.obs_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
-            world_obs_pose = obs_pose
+            world_obs_pose = goal_pose
             print("obs:", world_obs_pose)
             dis_obj = pose - world_obs_pose
             if np.linalg.norm(dis_obj) - 0.05 < Q:
@@ -320,7 +320,7 @@ class TrackingNode(Node):
         cmd_vel = Twist()
         cmd_vel.linear.x = u[0]
         cmd_vel.linear.y = u[1]
-        cmd_vel.angular.z = u[2]
+        #cmd_vel.angular.z = u[2]
         
         self.get_logger().warn(f'{cmd_vel}')
         return cmd_vel
