@@ -170,7 +170,7 @@ class TrackingNode(Node):
         k_linear = 0.4
         k_angular = 1.5
 
-        cmd_vel.angular.z = k_angular * heading_error
+        #cmd_vel.angular.z = k_angular * heading_error
 
         if distance > stop_distance:
             cmd_vel.linear.x = k_linear * (distance - stop_distance)
