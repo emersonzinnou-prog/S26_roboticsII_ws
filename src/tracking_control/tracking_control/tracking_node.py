@@ -304,7 +304,7 @@ class TrackingNode(Node):
         cmd_vel = Twist()
         cmd_vel.linear.x = u[0]
         cmd_vel.linear.y = u[1]
-        #cmd_vel.angular.z = u[2]
+        cmd_vel.angular.z = u[2]
         
         self.get_logger().warn(f'{cmd_vel}')
         return cmd_vel
