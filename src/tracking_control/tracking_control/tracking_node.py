@@ -298,9 +298,9 @@ class TrackingNode(Node):
         
         delta_t = 0.01
 
-        u = [v_star[0] * delta_t,
-            v_star[1] * delta_t,
-            gamma_star * delta_t]
+        u = [v_star[0],
+            v_star[1],
+            gamma_star]
         cmd_vel = Twist()
         cmd_vel.linear.x = u[0]
         cmd_vel.linear.y = u[1]
