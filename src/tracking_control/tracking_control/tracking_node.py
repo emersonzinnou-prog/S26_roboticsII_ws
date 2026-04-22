@@ -262,8 +262,8 @@ class TrackingNode(Node):
         K_v = 1
         K_h = 10
         zetta = 1
-        n = 0.5
-        Q = 2
+        n = 0.1
+        Q = 1
 
         pose = self.robot_world_R@np.array([-self.robot_world_x, -self.robot_world_y, self.robot_world_z])
         print("pose:", pose)
@@ -283,7 +283,7 @@ class TrackingNode(Node):
             world_obs_pose = goal_pose
             print("obs:", world_obs_pose)
             dis_obj = pose - world_obs_pose
-            radius = 0.2
+            radius = 0.1
             if np.linalg.norm(dis_obj) - radius < Q:
                 U_grad = U_grad - 0.5*n*(1/Q - 1/(np.linalg.norm(dis_obj)-radius))*1/(np.linalg.norm(dis_obj)-radius)**2*dis_obj/(np.linalg.norm(dis_obj))
         
