@@ -260,7 +260,7 @@ class TrackingNode(Node):
 
         #new code:
         K_v = 1
-        K_h = 10
+        K_h = 0.1
         zetta = 1
         n = 0.1
         Q = 1
@@ -293,7 +293,7 @@ class TrackingNode(Node):
         v_star = np.array([min(2, max(-2, K_v *U_grad[0])),min(2, max(-2, K_v *U_grad[1]))])
         theta_star = np.arctan2(dis_goal[1],dis_goal[0])
 
-        gamma_star = K_h * max(-np.pi/2, min(np.pi/2, theta_star))
+        gamma_star = K_h * max(-np.pi/2, min(np.pi/2, -theta_star))
         #gamma_star = 0.0
         
         delta_t = 0.01
