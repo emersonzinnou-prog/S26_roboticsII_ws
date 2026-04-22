@@ -260,12 +260,12 @@ class TrackingNode(Node):
 
         #new code:
         K_v = 1
-        K_h = 0.1
+        K_h = 0.3
         zetta = 1
         n = 0.1
         Q = 1
 
-        pose = self.robot_world_R@np.array([-self.robot_world_x, -self.robot_world_y, self.robot_world_z])
+        pose = np.array([self.robot_world_x, self.robot_world_y, self.robot_world_z])
         print("pose:", pose)
 
         #world_goal_pose = self.robot_world_R@self.goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
