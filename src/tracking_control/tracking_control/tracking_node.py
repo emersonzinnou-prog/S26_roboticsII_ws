@@ -265,11 +265,11 @@ class TrackingNode(Node):
         n = 0.1
         Q = 1
 
-        pose = np.array([0,0,0])
+        pose = np.array([self.robot_world_x, self.robot_world_y, self.robot_world_z])
         print("pose:", pose)
 
-        world_goal_pose = self.robot_world_R@self.goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
-        #world_goal_pose = goal_pose
+        #world_goal_pose = self.robot_world_R@self.goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
+        world_goal_pose = goal_pose
         print("goal:", world_goal_pose)
 
         dis_goal = (world_goal_pose - pose) 
