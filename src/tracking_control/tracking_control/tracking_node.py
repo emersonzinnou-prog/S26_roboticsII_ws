@@ -293,14 +293,14 @@ class TrackingNode(Node):
         v_star = np.array([min(2, max(-2, K_v *U_grad[0])),min(2, max(-2, K_v *U_grad[1]))])
         theta_star = np.arctan2(dis_goal[1],dis_goal[0])
 
-        gamma_star = K_h * max(-np.pi/2, min(np.pi/2, -theta_star))
+        gamma_star = K_h * max(-np.pi/2, min(np.pi/2, theta_star))
         #gamma_star = 0.0
         
         delta_t = 0.01
 
-        u = [v_star[0],
-            v_star[1],
-            gamma_star]
+        u = [float(v_star[0]),
+            float(v_star[1]),
+            float(gamma_star)]
         cmd_vel = Twist()
         cmd_vel.linear.x = u[0]
         cmd_vel.linear.y = u[1]
