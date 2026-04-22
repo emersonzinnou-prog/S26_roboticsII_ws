@@ -280,7 +280,7 @@ class TrackingNode(Node):
         
         if not goal_pose is None:
             #world_obs_pose = self.robot_world_R@self.obs_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
-            world_obs_pose = obs_pose
+            world_obs_pose = goal_pose
             print("obs:", world_obs_pose)
             dis_obj = pose - world_obs_pose
             radius = 0.1
