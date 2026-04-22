@@ -268,8 +268,8 @@ class TrackingNode(Node):
         pose = np.array([-self.robot_world_x, -self.robot_world_y, self.robot_world_z])
         print("pose:", pose)
 
-        world_goal_pose = self.robot_world_R@self.goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
-        #world_goal_pose = goal_pose
+        #world_goal_pose = self.robot_world_R@self.goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
+        world_goal_pose = goal_pose
         print("goal:", world_goal_pose)
 
         dis_goal = (world_goal_pose - pose) 
@@ -279,8 +279,8 @@ class TrackingNode(Node):
         #print(dis_goal)
         
         if not goal_pose is None:
-            world_obs_pose = self.robot_world_R@self.goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
-            #world_obs_pose = goal_pose
+            #world_obs_pose = self.robot_world_R@self.goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
+            world_obs_pose = goal_pose
             print("obs:", world_obs_pose)
             dis_obj = pose - world_obs_pose
             radius = 0.1
@@ -293,6 +293,7 @@ class TrackingNode(Node):
         v_star = np.array([min(2, max(-2, K_v *U_grad[0])),min(2, max(-2, K_v *U_grad[1]))])
         theta_star = np.arctan2(dis_goal[1],dis_goal[0])
 
+        print(theta_star)
         gamma_star = K_h * max(-np.pi/2, min(np.pi/2, theta_star))
         #gamma_star = 0.0
         
