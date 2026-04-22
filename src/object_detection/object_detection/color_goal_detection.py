@@ -10,6 +10,8 @@ import cv2
 import numpy as np
 import struct
 import sys
+from leg_tracker import draw_lower_body, get_follow_target
+from ultralytics import YOLO
 
 ## Functions for quaternion and rotation matrix conversion
 ## The code is adapted from the general_robotics_toolbox package
@@ -89,7 +91,9 @@ class ColorObjDetectionNode(Node):
         param_object_size_min = self.get_parameter('object_size_min').value
         
         # Convert the ROS image message to a numpy array
+        #GETS CV2 IMAGE
         rgb_image = self.br.imgmsg_to_cv2(rgb_msg,"bgr8")
+        
         # to hsv
         hsv_image = cv2.cvtColor(rgb_image, cv2.COLOR_BGR2HSV)
         
@@ -109,6 +113,7 @@ class ColorObjDetectionNode(Node):
             center_y = int(y + h / 2)
         else:
             return
+        
         # get the location of the detected object using point cloud
         pointid = (center_y*points_msg.row_step) + (center_x*points_msg.point_step)
         (X, Y, Z) = struct.unpack_from('fff', points_msg.data, offset=pointid)
@@ -132,7 +137,71 @@ class ColorObjDetectionNode(Node):
         except TransformException as e:
             self.get_logger().error('Transform Error: {}'.format(e))
             return
+        """
+        ##### START OF CHANGES
+        # AI leg detection
+        model = YOLO("yolov8n-pose.pt")
+        results = model(rgb_image, verbose=False)
+        tar = (0,0)
+        cent_dist = 1000000
+        for result in results:
+            if result.keypoints is None:
+                continue
+
+            for person_kps in result.keypoints.data:
+                keypoints = person_kps.cpu().numpy()  # shape: (17, 3) → x, y, conf
+
+                draw_lower_body(rgb_image, keypoints)
+
+                # Get the follow target (midpoint of ankles)
+                tar, ankles = get_follow_target(keypoints)
+                if np.sqrt((tar[0]-rgb_image.shape[0])**2 + (tar[1]-rgb_image.shape[1])**2) < cent_dist:
+                    target = [tar,ankles]
+                    cent_dist = np.sqrt((tar[0]-rgb_image.shape[0])**2 + (tar[1]-rgb_image.shape[1])**2)
+
+        # get the location of the detected object using point cloud
+        # CHANGE THIS PART
+
+        pos_in_space = (0,0,0)
+        for ankle in target[1]:
+            pointid = (ankle[1]*points_msg.row_step) + (ankle[0]*points_msg.point_step)
+            (X, Y, Z) = struct.unpack_from('fff', points_msg.data, offset=pointid)
+            center_points = np.array([X,Y,Z])
+
+            if np.any(np.isnan(center_points)):
+                return
+            try:
+                # Transform the center point from the camera frame to the world frame
+                transform = self.tf_buffer.lookup_transform('base_footprint',rgb_msg.header.frame_id,rclpy.time.Time(),rclpy.duration.Duration(seconds=0.2))
+                t_R = q2R(np.array([transform.transform.rotation.w,transform.transform.rotation.x,transform.transform.rotation.y,transform.transform.rotation.z]))
+                cp_robot = t_R@center_points+np.array([transform.transform.translation.x,transform.transform.translation.y,transform.transform.translation.z])
+                # Create a pose message for the detected object
+                detected_obj_pose = PoseStamped()
+                detected_obj_pose.header.frame_id = 'base_footprint'
+                detected_obj_pose.header.stamp = rgb_msg.header.stamp
+                detected_obj_pose.pose.position.x = cp_robot[0]
+                detected_obj_pose.pose.position.y = cp_robot[1]
+                detected_obj_pose.pose.position.z = cp_robot[2]
+                pos_in_space = pos_in_space + cp_robot
+            except TransformException as e:
+                self.get_logger().error('Transform Error: {}'.format(e))
+                return
         
+        pos_in_space = pos_in_space/2
+        #AVERAGING ANKLE LOCATIONS CAUSE THERE"S ONLY AIR BETWEEN A PERSONS LEGS
+        try:
+            detected_obj_pose = PoseStamped()
+            detected_obj_pose.header.frame_id = 'base_footprint'
+            detected_obj_pose.header.stamp = rgb_msg.header.stamp
+            detected_obj_pose.pose.position.x = pos_in_space[0]
+            detected_obj_pose.pose.position.y = pos_in_space[1]
+            detected_obj_pose.pose.position.z = pos_in_space[2]
+        except:
+            self.get_logger().error('Transform Error: {}'.format(e))
+            return
+
+        ##### END OF CHANGES
+        """
         # Publish the detected object
         self.pub_detected_obj_pose.publish(detected_obj_pose)
         # publush the detected object image
