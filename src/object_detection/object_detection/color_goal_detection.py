@@ -91,9 +91,7 @@ class ColorObjDetectionNode(Node):
         param_object_size_min = self.get_parameter('object_size_min').value
         
         # Convert the ROS image message to a numpy array
-        #GETS CV2 IMAGE
         rgb_image = self.br.imgmsg_to_cv2(rgb_msg,"bgr8")
-        
         # to hsv
         hsv_image = cv2.cvtColor(rgb_image, cv2.COLOR_BGR2HSV)
         
@@ -113,7 +111,6 @@ class ColorObjDetectionNode(Node):
             center_y = int(y + h / 2)
         else:
             return
-        
         # get the location of the detected object using point cloud
         pointid = (center_y*points_msg.row_step) + (center_x*points_msg.point_step)
         (X, Y, Z) = struct.unpack_from('fff', points_msg.data, offset=pointid)
@@ -137,6 +134,7 @@ class ColorObjDetectionNode(Node):
         except TransformException as e:
             self.get_logger().error('Transform Error: {}'.format(e))
             return
+        
         """
         ##### START OF CHANGES
         # AI leg detection
