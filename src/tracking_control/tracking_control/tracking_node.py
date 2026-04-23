@@ -391,7 +391,7 @@ class TrackingNode(Node):
         theta_star = np.arctan2(dis_goal[1],dis_goal[0])
         
         print(theta_star - self.robot_world_R_euler[2])
-        gamma_star = max(-np.pi/2, min(np.pi/2, K_h * (theta_star - self.robot_world_R_euler[2]) % (2*np.pi) - np.pi/2))
+        gamma_star = max(-np.pi/2, min(np.pi/2, K_h * (theta_star - self.robot_world_R_euler[2]) % (2*np.pi)))
         #v_star = np.array([0,0])
 
         #if abs(gamma_star) < 0.1:
