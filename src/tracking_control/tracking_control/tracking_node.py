@@ -227,7 +227,7 @@ class TrackingNode(Node):
         self.patrol = msg.data
         print("patrol:", self.patrol)
         if self.go_charge:
-            self.state = "Patrol"
+            self.state = "patrol"
             self.patrol_num = 0
             self.goal_pose = self.patrol_points[0]
         else:
@@ -343,7 +343,7 @@ class TrackingNode(Node):
         #pose = np.array([self.robot_world_x, self.robot_world_y, self.robot_world_z])
         print("pose:", pose)
         world_goal_pose = None
-        if self.state == "Patrol":
+        if self.state == "patrol":
             world_goal_pose = self.patrol_points[self.patrol_num]
 
         elif self.state == "Charge":
@@ -355,7 +355,7 @@ class TrackingNode(Node):
         print("goal:", world_goal_pose)
 
         dis_goal = (world_goal_pose - pose) 
-        if self.state == "Patrol":
+        if self.state == "patrol":
             if dis_goal < 0.2:
                 self.patrol_num = (self.patrol_num + 1) % 4
 
