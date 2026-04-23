@@ -430,6 +430,8 @@ class TrackingNode(Node):
         
         print(U_grad)
         #U_grad = self.robot_world_R@U_grad
+
+        """ REPLACE ANGLE CALC
         theta_star = np.arctan2(dis_goal[1],dis_goal[0])
         
         print(theta_star - self.robot_world_R_euler[2])
@@ -438,6 +440,30 @@ class TrackingNode(Node):
 
         #if abs(gamma_star) < 0.1:
         v_star = np.array([min(2, max(-2, K_v *U_grad[0])),min(2, max(-2, K_v *U_grad[1]))])
+        """
+        theta_star = np.arctan2(dis_goal[1], dis_goal[0])
+        
+        heading_error = theta_star - self.robot_world_R_euler[2]
+        heading_error = math.atan2(math.sin(heading_error), math.cos(heading_error))
+        
+        print("heading error:", heading_error)
+        
+        gamma_star = max(-0.6, min(0.6, K_h * heading_error))
+        
+        dist_goal = np.sqrt(dis_goal[0]**2 + dis_goal[1]**2)
+        
+        if dist_goal < 0.20:
+            K_v_use = 0.15
+        else:
+            K_v_use = K_v
+        
+        if abs(heading_error) < 0.25:
+            v_star = np.array([
+                min(0.20, max(-0.20, K_v_use * U_grad[0])),
+                min(0.20, max(-0.20, K_v_use * U_grad[1]))
+            ])
+        else:
+            v_star = np.array([0.0, 0.0])
         
         #gamma_star = 0.0
         
