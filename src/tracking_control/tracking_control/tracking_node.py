@@ -389,7 +389,7 @@ class TrackingNode(Node):
         #U_grad = self.robot_world_R@U_grad
         theta_star = np.arctan2(dis_goal[1],dis_goal[0])
 
-        print(euler_from_quaternion(R), theta_star)
+        print(euler_from_quaternion(self.robot_world_R), theta_star)
         gamma_star = max(-np.pi/2, min(np.pi/2, -K_h * theta_star))
         v_star = np.array([0,0])
 
