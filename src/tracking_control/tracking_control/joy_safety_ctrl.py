@@ -1,11 +1,11 @@
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, Bool
 import numpy as np
 import sys, select, termios, tty
 
 #EMERSON ADD
-from std_msgs.msg import Bool
+#from std_msgs.msg import Bool
 
 msg = """
 Control Your Robot!
