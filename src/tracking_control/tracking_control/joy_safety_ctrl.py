@@ -22,7 +22,8 @@ k : force stop
 space key : turn on/off tracking
 anything else : stop smoothly
 
-g : go to charging point
+g : go to charging point (press g to stop)
+p: partrol
 
 CTRL-C to quit
 """
@@ -59,6 +60,9 @@ class JoySafetyNode(Node):
 
         #EMERSON ADD
         self.pub_go_charge = self.create_publisher(Bool, '/go_charge', 10)
+
+       #EMERSON ADD
+        self.pub_go_charge = self.create_publisher(Bool, '/patrol', 10)
        
         # Create a subscriber to the control command
         self.sub_track_cmd = self.create_subscription(Twist, '/track_cmd_vel', self.tracking_cmd_callback, 10)
@@ -140,7 +144,13 @@ def main(args=None):
             joy_safety_node.pub_go_charge.publish(Bool(data=True))
         elif key == 'h':
             joy_safety_node.pub_go_charge.publish(Bool(data=False))
+            print("Cancel go to charging point") 
+         elif key =='p':   #EMERSON ADD
+            joy_safety_node.pub_go_charge.publish(Bool(data=True))
+         elif key == ';':
+            joy_safety_node.pub_go_charge.publish(Bool(data=False))
             print("Cancel go to charging point") ###
+         
             
         elif key in moveBindings.keys():
             joy_safety_node.joystick_state = moveBindings[key]
