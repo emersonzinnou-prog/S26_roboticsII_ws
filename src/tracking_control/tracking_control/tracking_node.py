@@ -1,7 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Twist, PoseStamped
-from tf2_ros import TransformException, Buffer, TransformListener, quaternion_from_matrix
+from tf2_ros import TransformException, Buffer, TransformListener
 import numpy as np
 import math
 import time
@@ -390,8 +390,8 @@ class TrackingNode(Node):
         #U_grad = self.robot_world_R@U_grad
         theta_star = np.arctan2(dis_goal[1],dis_goal[0])
         
-        print(robot_world_R_euler, theta_star)
-        gamma_star = max(-np.pi/2, min(np.pi/2, -K_h * theta_star))
+        print(self.robot_world_R_euler, theta_star)
+        gamma_star = max(-np.pi/2, min(np.pi/2, -K_h * (theta_star - self.robot_world_R_euler[2])))
         v_star = np.array([0,0])
 
         if gamma_star < 0.1:
