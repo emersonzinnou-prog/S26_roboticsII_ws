@@ -74,6 +74,7 @@ class TrackingNode(Node):
         self.state = "Goal"
         self.patrol_num = 0
         self.patrol_points = [ np.array([1, 0, 0]),np.array([1, -1, 0]),np.array([0, -1, 0]),np.array([0, 0, 0])]
+        self.patrol = False
         self.start = None
 
         #EMERSON ADD
@@ -99,6 +100,13 @@ class TrackingNode(Node):
             Bool,
             '/go_charge',
             self.go_charge_callback,
+            10
+        )
+
+        self.sub_patrol = self.create_subscription(
+            Bool,
+            '/patrol',
+            self.patrol_callback,
             10
         )
         ##
@@ -210,6 +218,11 @@ class TrackingNode(Node):
     def go_charge_callback(self, msg):
         self.go_charge = msg.data
         print("go_charge:", self.go_charge)
+        self.state = "Charge"
+        
+    def patrol_callback(self, msg):
+        self.patrol = msg.data
+        print("patrol:", self.patrol)
         if self.go_charge:
             self.state = "Patrol"
             self.patrol_num = 0
@@ -328,6 +341,10 @@ class TrackingNode(Node):
         world_goal_pose = None
         if self.state == "Patrol":
             world_goal_pose = self.patrol_points[self.patrol_num]
+
+        elif self.state == "Charge":
+            world_goal_pose = self.charge_point
+            
         else:
             #world_goal_pose = self.robot_world_R@self.goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
             world_goal_pose = goal_pose
