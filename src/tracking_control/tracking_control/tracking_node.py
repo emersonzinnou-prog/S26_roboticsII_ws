@@ -72,6 +72,8 @@ class TrackingNode(Node):
         self.goal_pose = None
         
         self.state = "Goal"
+        self.patrol_num = 0
+        self.patrol_points = [ np.array([1, 0, 0]),np.array([1, -1, 0]),np.array([0, -1, 0]),np.array([0, 0, 0])]
         self.start = None
 
         #EMERSON ADD
@@ -208,6 +210,10 @@ class TrackingNode(Node):
     def go_charge_callback(self, msg):
         self.go_charge = msg.data
         print("go_charge:", self.go_charge)
+        if self.go_charge:
+            self.state = "Patrol"
+        else:
+            self.state = None
     ##
 
     
@@ -282,7 +288,7 @@ class TrackingNode(Node):
         if self.start is None:
             self.start = np.array([self.robot_world_x, self.robot_world_y, self.robot_world_z])
             #EMERSON ADD
-            self.charge_point = self.start + np.array([0.0, -0.61, 0.0])
+            self.charge_point = self.start + np.array([0.0, -1, 0.0])
             ##
         """ 
         ################################################################### ^
@@ -307,7 +313,7 @@ class TrackingNode(Node):
         #return cmd_vel
 
         #new code:
-        K_v = 1
+        K_v = 0.5
         K_h = 0.3
         zetta = 1
         n = 0.1
@@ -317,22 +323,39 @@ class TrackingNode(Node):
         pose = np.array([-self.robot_world_x, -self.robot_world_y, self.robot_world_z])
         #pose = np.array([self.robot_world_x, self.robot_world_y, self.robot_world_z])
         print("pose:", pose)
-
-        #world_goal_pose = self.robot_world_R@self.goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
-        world_goal_pose = goal_pose
+        world_goal_pose = None
+        if self.state == "Patrol":
+            world_goal_pose = self.patrol_points[self.patrol_num]
+        else:
+            #world_goal_pose = self.robot_world_R@self.goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
+            world_goal_pose = goal_pose
         print("goal:", world_goal_pose)
 
         dis_goal = (world_goal_pose - pose) 
+        if self.state == "Patrol":
+            if dis_goal < 0.2:
+                self.patrol_num = (self.patrol_num + 1) % 4
 
         #Potential Field
         U_grad = zetta * dis_goal
         #print(dis_goal)
 
         # EMERSON want to maybe change if line to "if not obs_pose is None:"
+
+        """
         if not goal_pose is None:
             #world_obs_pose = self.robot_world_R@self.goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
             #EMERSON want to maybe change if line to "world_obs_pose = obs_pose"
             world_obs_pose = goal_pose
+            print("obs:", world_obs_pose)
+            dis_obj = pose - world_obs_pose
+            radius = 0.1
+            if np.linalg.norm(dis_obj) - radius < Q:
+                U_grad = U_grad - 0.5*n*(1/Q - 1/(np.linalg.norm(dis_obj)-radius))*1/(np.linalg.norm(dis_obj)-radius)**2*dis_obj/(np.linalg.norm(dis_obj))
+        """
+
+        if not obs_pose is None:
+            world_obs_pose = obs_pose
             print("obs:", world_obs_pose)
             dis_obj = pose - world_obs_pose
             radius = 0.1
@@ -346,7 +369,7 @@ class TrackingNode(Node):
         theta_star = np.arctan2(dis_goal[1],dis_goal[0])
 
         print(theta_star)
-        gamma_star = K_h * max(-np.pi/2, min(np.pi/2, theta_star))
+        gamma_star = max(-np.pi/2, min(np.pi/2, K_h * theta_star))
         #gamma_star = 0.0
         
         delta_t = 0.01
