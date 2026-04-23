@@ -336,7 +336,7 @@ class TrackingNode(Node):
         K_h = 0.6
         zetta = 0.5
         n = 2
-        Q = 0.3
+        Q = 0.09
 
         # EMERSON CHANGE (BACK TO ORIGINAL)
         """
@@ -448,7 +448,7 @@ class TrackingNode(Node):
         
         print("heading error:", heading_error)
         
-        gamma_star = max(-0.1, min(0.1, K_h * heading_error))
+        gamma_star = max(-0.01, min(0.01, K_h * heading_error))
         
         dist_goal = np.sqrt(dis_goal[0]**2 + dis_goal[1]**2)
         
