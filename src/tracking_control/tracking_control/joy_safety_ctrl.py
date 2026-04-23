@@ -22,7 +22,7 @@ k : force stop
 space key : turn on/off tracking
 anything else : stop smoothly
 
-g : go to charging point (press g to stop)
+g : go to charging point (press h to stop)
 p: partrol
 
 CTRL-C to quit
