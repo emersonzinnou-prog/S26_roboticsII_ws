@@ -62,7 +62,7 @@ class JoySafetyNode(Node):
         self.pub_go_charge = self.create_publisher(Bool, 'go_charge', 10)
 
        #EMERSON ADD
-        self.pub_go_charge = self.create_publisher(Bool, 'patrol', 10)
+        self.pub_patrol = self.create_publisher(Bool, 'patrol', 10)
        
         # Create a subscriber to the control command
         self.sub_track_cmd = self.create_subscription(Twist, '/track_cmd_vel', self.tracking_cmd_callback, 10)
