@@ -391,8 +391,8 @@ class TrackingNode(Node):
 
         print(theta_star)
         gamma_star = max(-np.pi/2, min(np.pi/2, -K_h * theta_star))
-        v_star = 0
-        
+        v_star = np.array([0,0])
+
         if gamma_star < 0.1:
             v_star = np.array([min(2, max(-2, K_v *U_grad[0])),min(2, max(-2, K_v *U_grad[1]))])
         
