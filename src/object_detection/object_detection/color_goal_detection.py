@@ -10,11 +10,9 @@ import cv2
 import numpy as np
 import struct
 import sys
-from leg_tracker import draw_lower_body, get_follow_target
-
-import sys
 print(sys.version)
 
+from leg_tracker import draw_lower_body, get_follow_target
 from ultralytics import YOLO
 
 ## Functions for quaternion and rotation matrix conversion
