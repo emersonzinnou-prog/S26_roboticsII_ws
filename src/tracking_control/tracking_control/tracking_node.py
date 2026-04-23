@@ -340,7 +340,7 @@ class TrackingNode(Node):
         Q = 1
 
         # EMERSON CHANGE (BACK TO ORIGINAL)
-        pose = np.array([self.robot_world_x, self.robot_world_y, self.robot_world_z])
+        pose = self.robot_world_R@np.array([self.robot_world_x, self.robot_world_y, self.robot_world_z])
         #pose = np.array([self.robot_world_x, self.robot_world_y, self.robot_world_z])
         print("pose:", pose)
         world_goal_pose = None
