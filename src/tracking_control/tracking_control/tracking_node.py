@@ -345,10 +345,10 @@ class TrackingNode(Node):
         print("pose:", pose)
         world_goal_pose = None
         if self.state == "patrol":
-            world_goal_pose = self.patrol_points[self.patrol_num]
+            world_goal_pose = self.robot_world_R@self.patrol_points[self.patrol_num]+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
 
         elif self.state == "Charge":
-            world_goal_pose = self.charge_point
+            world_goal_pose = self.robot_world_R@self.charge_point+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
 
         else:
             world_goal_pose = self.robot_world_R@goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
