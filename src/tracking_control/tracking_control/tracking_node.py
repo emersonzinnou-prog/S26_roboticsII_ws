@@ -317,8 +317,8 @@ class TrackingNode(Node):
         #new code:
         K_v = 0.5
         K_h = 0.3
-        zetta = 1
-        n = 0.1
+        zetta = 0.5
+        n = 2
         Q = 1
 
         # EMERSON CHANGE (BACK TO ORIGINAL)
