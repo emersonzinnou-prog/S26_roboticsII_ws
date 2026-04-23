@@ -392,7 +392,7 @@ class TrackingNode(Node):
         theta_star = np.arctan2(dis_goal[1],dis_goal[0])
 
         print(theta_star)
-        gamma_star = max(-np.pi/2, min(np.pi/2, K_h * theta_star))
+        gamma_star = max(-np.pi/2, min(np.pi/2, -K_h * theta_star))
         #gamma_star = 0.0
         
         delta_t = 0.01
