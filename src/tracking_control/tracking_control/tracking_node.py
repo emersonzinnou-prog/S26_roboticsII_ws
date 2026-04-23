@@ -387,12 +387,15 @@ class TrackingNode(Node):
         
         print(U_grad)
         #U_grad = self.robot_world_R@U_grad
-
-        v_star = np.array([min(2, max(-2, K_v *U_grad[0])),min(2, max(-2, K_v *U_grad[1]))])
         theta_star = np.arctan2(dis_goal[1],dis_goal[0])
 
         print(theta_star)
         gamma_star = max(-np.pi/2, min(np.pi/2, -K_h * theta_star))
+        v_star = 0
+        
+        if gamma_star < 0.1:
+            v_star = np.array([min(2, max(-2, K_v *U_grad[0])),min(2, max(-2, K_v *U_grad[1]))])
+        
         #gamma_star = 0.0
         
         delta_t = 0.01
