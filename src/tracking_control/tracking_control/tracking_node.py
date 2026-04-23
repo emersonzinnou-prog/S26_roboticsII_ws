@@ -299,6 +299,7 @@ class TrackingNode(Node):
                 self.pub_control_cmd.publish(cmd_vel)
                 self.go_charge = False
                 print("Reached charging point")
+                time.sleep(100)
                 return
         ##
         
@@ -357,7 +358,7 @@ class TrackingNode(Node):
 
         dis_goal = (world_goal_pose - pose) 
         if self.state == "patrol":
-            if np.dot(dis_goal, dis_goal) < 0.1:
+            if np.dot(dis_goal, dis_goal) < 0.05:
                 self.patrol_num = (self.patrol_num + 1) % 4
 
         #Potential Field
