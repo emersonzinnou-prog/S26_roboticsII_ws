@@ -357,7 +357,7 @@ class TrackingNode(Node):
 
         dis_goal = (world_goal_pose - pose) 
         if self.state == "patrol":
-            if dis_goal < 0.2:
+            if np.dot(dis_goal, dis_goal) < 0.2:
                 self.patrol_num = (self.patrol_num + 1) % 4
 
         #Potential Field
