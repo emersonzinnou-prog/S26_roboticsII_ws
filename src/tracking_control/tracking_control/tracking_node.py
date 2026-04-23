@@ -177,7 +177,8 @@ class TrackingNode(Node):
             return
         
         # Get the detected object pose in the world frame
-        self.goal_pose = cp_world
+        if self.state == "Goal":
+            self.goal_pose = cp_world
         
     def get_current_poses(self):
         
@@ -219,6 +220,8 @@ class TrackingNode(Node):
         self.go_charge = msg.data
         print("go_charge:", self.go_charge)
         self.state = "Charge"
+        if not self.go_charge:
+            self.state = "Goal"
         
     def patrol_callback(self, msg):
         self.patrol = msg.data
@@ -229,6 +232,7 @@ class TrackingNode(Node):
             self.goal_pose = self.patrol_points[0]
         else:
             self.state = None
+            self.state = "Goal"
     ##
 
     
