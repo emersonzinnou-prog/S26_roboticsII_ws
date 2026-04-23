@@ -227,7 +227,7 @@ class TrackingNode(Node):
     def patrol_callback(self, msg):
         self.patrol = msg.data
         print("patrol:", self.patrol)
-        if self.go_charge:
+        if self.patrol:
             self.state = "patrol"
             self.patrol_num = 0
             self.goal_pose = self.patrol_points[0]
@@ -340,7 +340,7 @@ class TrackingNode(Node):
         Q = 1
 
         # EMERSON CHANGE (BACK TO ORIGINAL)
-        pose = np.array([-self.robot_world_x, -self.robot_world_y, self.robot_world_z])
+        pose = np.array([self.robot_world_x, self.robot_world_y, self.robot_world_z])
         #pose = np.array([self.robot_world_x, self.robot_world_y, self.robot_world_z])
         print("pose:", pose)
         world_goal_pose = None
