@@ -142,14 +142,16 @@ def main(args=None):
            
         elif key =='g':   #EMERSON ADD
             joy_safety_node.pub_go_charge.publish(Bool(data=True))
+            print("Go to charging point") 
         elif key == 'h':
             joy_safety_node.pub_go_charge.publish(Bool(data=False))
             print("Cancel go to charging point") 
         elif key =='p':   #EMERSON ADD
             joy_safety_node.pub_go_charge.publish(Bool(data=True))
+            print("Start Patrol point") 
         elif key == ';':
             joy_safety_node.pub_go_charge.publish(Bool(data=False))
-            print("Cancel go to charging point") ###
+            print("Stop Patrol") 
          
             
         elif key in moveBindings.keys():
