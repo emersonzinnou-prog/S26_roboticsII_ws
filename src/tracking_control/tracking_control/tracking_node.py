@@ -340,7 +340,7 @@ class TrackingNode(Node):
         Q = 1
 
         # EMERSON CHANGE (BACK TO ORIGINAL)
-        pose = np.array([-self.robot_world_x, -self.robot_world_y, self.robot_world_z])
+        pose = np.array([self.robot_world_x, self.robot_world_y, self.robot_world_z])
         #pose = np.array([self.robot_world_x, self.robot_world_y, self.robot_world_z])
         print("pose:", pose)
         world_goal_pose = None
@@ -391,7 +391,7 @@ class TrackingNode(Node):
         theta_star = np.arctan2(dis_goal[1],dis_goal[0])
         
         print(theta_star - self.robot_world_R_euler[2])
-        gamma_star = max(-np.pi/2, min(np.pi/2, K_h * (theta_star + self.robot_world_R_euler[2])))
+        gamma_star = max(-np.pi/2, min(np.pi/2, K_h * (theta_star - self.robot_world_R_euler[2])))
         #v_star = np.array([0,0])
 
         #if abs(gamma_star) < 0.1:
