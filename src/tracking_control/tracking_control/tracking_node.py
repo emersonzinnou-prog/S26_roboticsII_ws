@@ -212,6 +212,8 @@ class TrackingNode(Node):
         print("go_charge:", self.go_charge)
         if self.go_charge:
             self.state = "Patrol"
+            self.patrol_num = 0
+            self.goal_pose = self.patrol_points[0]
         else:
             self.state = None
     ##
