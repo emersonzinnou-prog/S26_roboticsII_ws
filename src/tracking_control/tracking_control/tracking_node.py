@@ -191,6 +191,7 @@ class TrackingNode(Node):
             self.robot_world_y = transform.transform.translation.y
             self.robot_world_z = transform.transform.translation.z
             self.robot_world_R = q2R([transform.transform.rotation.w, transform.transform.rotation.x, transform.transform.rotation.y, transform.transform.rotation.z])
+            self.robot_world_R_euler = euler_from_quaternion([transform.transform.rotation.w, transform.transform.rotation.x, transform.transform.rotation.y, transform.transform.rotation.z])
 
             
             ################################################################### changing this
@@ -388,8 +389,8 @@ class TrackingNode(Node):
         print(U_grad)
         #U_grad = self.robot_world_R@U_grad
         theta_star = np.arctan2(dis_goal[1],dis_goal[0])
-        quat = quaternion_from_matrix(self.robot_world_R)
-        print(euler_from_quaternion(quat), theta_star)
+        
+        print(robot_world_R_euler, theta_star)
         gamma_star = max(-np.pi/2, min(np.pi/2, -K_h * theta_star))
         v_star = np.array([0,0])
 
