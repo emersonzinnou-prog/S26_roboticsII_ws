@@ -5,6 +5,7 @@ from tf2_ros import TransformException, Buffer, TransformListener
 import numpy as np
 import math
 import time
+from std_msgs.msg import Bool
 
 ## Functions for quaternion and rotation matrix conversion
 ## The code is adapted from the general_robotics_toolbox package
@@ -73,6 +74,11 @@ class TrackingNode(Node):
         self.state = "Goal"
         self.start = None
 
+        #EMERSON ADD
+        self.charge_point = None
+        self.go_charge = False
+        ##
+
         # ROS parameters
         self.declare_parameter('world_frame_id', 'odom')
 
@@ -86,8 +92,19 @@ class TrackingNode(Node):
         self.sub_detected_goal_pose = self.create_subscription(PoseStamped, 'detected_color_object_pose', self.detected_obs_pose_callback, 10)
         self.sub_detected_obs_pose = self.create_subscription(PoseStamped, 'detected_color_goal_pose', self.detected_goal_pose_callback, 10)
 
+        #EMERSON ADD
+        self.sub_go_charge = self.create_subscription(
+            Bool,
+            '/go_charge',
+            self.go_charge_callback,
+            10
+        )
+        ##
         # Create timer, running at 100Hz
         self.timer = self.create_timer(0.01, self.timer_update)
+
+        self.state = "Goal"
+        self.start = None
     
     def detected_obs_pose_callback(self, msg):
         #self.get_logger().info('Received Detected Object Pose')
@@ -164,20 +181,15 @@ class TrackingNode(Node):
             self.robot_world_z = transform.transform.translation.z
             self.robot_world_R = q2R([transform.transform.rotation.w, transform.transform.rotation.x, transform.transform.rotation.y, transform.transform.rotation.z])
 
-
+            
             ################################################################### changing this
-            #old code:
-            #obstacle_pose = robot_world_R@self.obs_pose+np.array([robot_world_x,robot_world_y,robot_world_z])
-            #goal_pose = robot_world_R@self.goal_pose+np.array([robot_world_x,robot_world_y,robot_world_z])
 
-            #new code:
-            #obstacle_pose = None
-            #goal_pose = None
-            #if not self.obs_pose is None:
-            #    obstacle_pose = self.robot_world_R@self.obs_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
-            #if not self.goal_pose is None:
-            #    goal_pose = self.robot_world_R@self.goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
-            #print(obstacle_pose, goal_pose)
+            #EMERSON MOVE
+            if self.start is None:
+                self.start = np.array([self.robot_world_x, self.robot_world_y, self.robot_world_z])
+                #EMERSON ADD
+                self.charge_point = self.start + np.array([0.0, -0.61, 0.0])
+            ##
 
             obstacle_pose = self.obs_pose
             goal_pose = self.goal_pose
@@ -190,6 +202,14 @@ class TrackingNode(Node):
             return
         
         return obstacle_pose, goal_pose
+
+    
+    #EMERSON ADD
+    def go_charge_callback(self, msg):
+        self.go_charge = msg.data
+        print("go_charge:", self.go_charge)
+    ##
+
     
     def timer_update(self):
         ################### Write your code here ###################
@@ -204,6 +224,10 @@ class TrackingNode(Node):
             return
             
         current_obs_pose, current_goal_pose = pose_check
+
+        #EMERSON ADD
+        if self.go_charge and self.charge_point is not None:
+            current_goal_pose = self.charge_point
         ###############################################################
         
         # Now, the robot stops if the object is not detected
@@ -232,11 +256,35 @@ class TrackingNode(Node):
         self.robot_world_z = transform.transform.translation.z
         self.robot_world_R = q2R([transform.transform.rotation.w, transform.transform.rotation.x, transform.transform.rotation.y, transform.transform.rotation.z])
 
-        cmd_vel = self.controller(current_obs_pose, current_goal_pose)
+
+        ### EMERSON ADD LARGE CHUNK
+        if self.go_charge and self.charge_point is not None:
+            current_goal_pose = self.charge_point
         
+            dist_to_charge = np.linalg.norm(
+                self.charge_point[:2] - np.array([self.robot_world_x, self.robot_world_y])
+            )
+        
+            if dist_to_charge < 0.10:
+                cmd_vel = Twist()
+                cmd_vel.linear.x = 0.0
+                cmd_vel.linear.y = 0.0
+                cmd_vel.angular.z = 0.0
+                self.pub_control_cmd.publish(cmd_vel)
+                self.go_charge = False
+                print("Reached charging point")
+                return
+        ##
+        
+        cmd_vel = self.controller(current_obs_pose, current_goal_pose)
+
+        """  EMERSON MOVE TO EARLIER PART
         if self.start is None:
             self.start = np.array([self.robot_world_x, self.robot_world_y, self.robot_world_z])
-
+            #EMERSON ADD
+            self.charge_point = self.start + np.array([0.0, -0.61, 0.0])
+            ##
+        """ 
         ################################################################### ^
         
         # publish the control command
@@ -265,7 +313,9 @@ class TrackingNode(Node):
         n = 0.1
         Q = 1
 
-        pose = np.array([-self.robot_world_x, -self.robot_world_y, self.robot_world_z])
+        # EMERSON CHANGE
+        #pose = np.array([-self.robot_world_x, -self.robot_world_y, self.robot_world_z])
+        pose = np.array([self.robot_world_x, self.robot_world_y, self.robot_world_z])
         print("pose:", pose)
 
         #world_goal_pose = self.robot_world_R@self.goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
@@ -277,10 +327,13 @@ class TrackingNode(Node):
         #Potential Field
         U_grad = zetta * dis_goal
         #print(dis_goal)
-        
-        if not goal_pose is None:
+
+        # EMERSON change if statement line from "if not goal_pose is None:"
+        if not obs_pose is None:
             #world_obs_pose = self.robot_world_R@self.goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
-            world_obs_pose = goal_pose
+            #EMERSON CHANGE
+            #world_obs_pose = goal_pose
+            world_obs_pose = obs_pose
             print("obs:", world_obs_pose)
             dis_obj = pose - world_obs_pose
             radius = 0.1
@@ -311,6 +364,7 @@ class TrackingNode(Node):
         return cmd_vel
     
        ################################################################### ^
+
 
 def main(args=None):
     # Initialize the rclpy library
