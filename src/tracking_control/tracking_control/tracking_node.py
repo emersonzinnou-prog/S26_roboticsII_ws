@@ -98,14 +98,14 @@ class TrackingNode(Node):
         #EMERSON ADD
         self.sub_go_charge = self.create_subscription(
             Bool,
-            '/go_charge',
+            'go_charge',
             self.go_charge_callback,
             10
         )
 
         self.sub_patrol = self.create_subscription(
             Bool,
-            '/patrol',
+            'patrol',
             self.patrol_callback,
             10
         )
