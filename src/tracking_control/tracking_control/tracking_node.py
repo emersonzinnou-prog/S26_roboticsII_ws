@@ -335,7 +335,7 @@ class TrackingNode(Node):
 
         #new code:
         K_v = 0.5
-        K_h = 0.3
+        K_h = 0.6
         zetta = 0.5
         n = 2
         Q = 1
@@ -350,7 +350,13 @@ class TrackingNode(Node):
 
         elif self.state == "Charge":
             world_goal_pose = self.robot_world_R@self.charge_point+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
-
+            dist_to_charge = np.linalg.norm(
+                self.charge_point[:2] - np.array([self.robot_world_x, self.robot_world_y])
+            )
+            if dist_to_charge < 0.10:
+                K_h = 0
+                K_v = 0
+                
         else:
             world_goal_pose = self.robot_world_R@goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
             #world_goal_pose = goal_pose
@@ -358,7 +364,7 @@ class TrackingNode(Node):
 
         dis_goal = (world_goal_pose - pose) 
         if self.state == "patrol":
-            if np.dot(dis_goal, dis_goal) < 0.05:
+            if np.sqrt(dis_goal[0]**2+ dis_goal[1]**2) < 0.05:
                 self.patrol_num = (self.patrol_num + 1) % 4
 
         #Potential Field
