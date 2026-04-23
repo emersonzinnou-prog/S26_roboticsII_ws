@@ -148,7 +148,7 @@ def main(args=None):
             print("Cancel go to charging point") 
         elif key =='p':   #EMERSON ADD
             joy_safety_node.pub_go_charge.publish(Bool(data=True))
-           print("Start Patrol point") 
+            print("Start Patrol point") 
         elif key == ';':
             joy_safety_node.pub_go_charge.publish(Bool(data=False))
             print("Stop Patrol") 
