@@ -9,7 +9,7 @@ from cv_bridge import CvBridge
 import cv2
 import numpy as np
 import struct
-from ultralytics import YOLO
+#from ultralytics import YOLO
 
 # Lower-body landmark indices (COCO keypoint format)
 LOWER_BODY_KEYPOINTS = {
