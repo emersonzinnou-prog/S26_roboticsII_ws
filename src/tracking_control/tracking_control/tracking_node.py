@@ -299,7 +299,6 @@ class TrackingNode(Node):
                 self.pub_control_cmd.publish(cmd_vel)
                 self.go_charge = False
                 print("Reached charging point")
-                time.sleep(100)
                 return
         ##
         
@@ -373,18 +372,17 @@ class TrackingNode(Node):
 
         # EMERSON want to maybe change if line to "if not obs_pose is None:"
 
-        """
-        if not goal_pose is None:
-            #world_obs_pose = self.robot_world_R@self.goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
-            #EMERSON want to maybe change if line to "world_obs_pose = obs_pose"
-            world_obs_pose = goal_pose
-            print("obs:", world_obs_pose)
-            dis_obj = pose - world_obs_pose
-            radius = 0.1
-            if np.linalg.norm(dis_obj) - radius < Q:
-                U_grad = U_grad - 0.5*n*(1/Q - 1/(np.linalg.norm(dis_obj)-radius))*1/(np.linalg.norm(dis_obj)-radius)**2*dis_obj/(np.linalg.norm(dis_obj))
-        """
-
+        if self.state == "Goal":
+            if not goal_pose is None:
+                #world_obs_pose = self.robot_world_R@self.goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
+                #EMERSON want to maybe change if line to "world_obs_pose = obs_pose"
+                world_obs_pose = goal_pose
+                print("Goal Field Active")
+                dis_obj = pose - world_obs_pose
+                radius = 0.1
+                if np.linalg.norm(dis_obj) - radius < Q:
+                    U_grad = U_grad - 0.5*n*(1/Q - 1/(np.linalg.norm(dis_obj)-radius))*1/(np.linalg.norm(dis_obj)-radius)**2*dis_obj/(np.linalg.norm(dis_obj))
+        
         if not obs_pose is None:
             world_obs_pose = self.robot_world_R@obs_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
             #world_obs_pose = obs_pose
