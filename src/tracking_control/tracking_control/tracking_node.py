@@ -313,9 +313,9 @@ class TrackingNode(Node):
         n = 0.1
         Q = 1
 
-        # EMERSON CHANGE
-        #pose = np.array([-self.robot_world_x, -self.robot_world_y, self.robot_world_z])
-        pose = np.array([self.robot_world_x, self.robot_world_y, self.robot_world_z])
+        # EMERSON CHANGE (BACK TO ORIGINAL)
+        pose = np.array([-self.robot_world_x, -self.robot_world_y, self.robot_world_z])
+        #pose = np.array([self.robot_world_x, self.robot_world_y, self.robot_world_z])
         print("pose:", pose)
 
         #world_goal_pose = self.robot_world_R@self.goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
@@ -328,12 +328,11 @@ class TrackingNode(Node):
         U_grad = zetta * dis_goal
         #print(dis_goal)
 
-        # EMERSON change if statement line from "if not goal_pose is None:"
-        if not obs_pose is None:
+        # EMERSON want to maybe change if line to "if not obs_pose is None:"
+        if not goal_pose is None:
             #world_obs_pose = self.robot_world_R@self.goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
-            #EMERSON CHANGE
-            #world_obs_pose = goal_pose
-            world_obs_pose = obs_pose
+            #EMERSON want to maybe change if line to "world_obs_pose = obs_pose"
+            world_obs_pose = goal_pose
             print("obs:", world_obs_pose)
             dis_obj = pose - world_obs_pose
             radius = 0.1
