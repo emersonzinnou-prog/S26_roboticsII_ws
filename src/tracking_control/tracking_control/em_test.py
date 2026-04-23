@@ -73,7 +73,7 @@ class TrackingNode(Node):
         
         self.state = "Goal"
         self.patrol_num = 0
-        self.patrol_points = [ np.array([1, 0, 0]),np.array([1, -1, 0]),np.array([0, -1, 0]),np.array([0, 0, 0])]
+        self.patrol_points = [ np.array([.6, 0, 0]),np.array([.6, -.6, 0]),np.array([0, -.6, 0]),np.array([0, 0, 0])]
         self.patrol = False
         self.start = None
 
@@ -200,7 +200,7 @@ class TrackingNode(Node):
             if self.start is None:
                 self.start = np.array([self.robot_world_x, self.robot_world_y, self.robot_world_z])
                 #EMERSON ADD
-                self.charge_point = np.array([0.0, -1.0, 0.0])
+                self.charge_point = np.array([0.0, -.6, 0.0])
             ##
 
             obstacle_pose = self.obs_pose
