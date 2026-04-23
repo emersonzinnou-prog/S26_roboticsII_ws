@@ -375,7 +375,7 @@ class TrackingNode(Node):
             dist_to_charge = np.linalg.norm(
                 self.charge_point[:2] - np.array([self.robot_world_x, self.robot_world_y])
             )
-            if dist_to_charge < 0.10:
+            if dist_to_charge < 0.20:
                 K_h = 0
                 K_v = 0
                 
@@ -387,7 +387,7 @@ class TrackingNode(Node):
         dis_goal = (world_goal_pose - pose)
 
         if self.state == "patrol":
-            if np.sqrt(dis_goal[0]**2+ dis_goal[1]**2) < 0.05:
+            if np.sqrt(dis_goal[0]**2+ dis_goal[1]**2) < 0.1:
                 self.patrol_num = (self.patrol_num + 1) % 4
 
         #Potential Field
@@ -448,7 +448,7 @@ class TrackingNode(Node):
         
         print("heading error:", heading_error)
         
-        gamma_star = max(-0.6, min(0.6, K_h * heading_error))
+        gamma_star = max(-0.3, min(0.3, K_h * heading_error))
         
         dist_goal = np.sqrt(dis_goal[0]**2 + dis_goal[1]**2)
         
