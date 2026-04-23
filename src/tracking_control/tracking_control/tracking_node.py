@@ -256,9 +256,7 @@ class TrackingNode(Node):
             current_goal_pose = self.charge_point
         ###############################################################
         
-        # Now, the robot stops if the object is not detected
-        # But, you may want to think about what to do in this case
-        # and update the command velocity accordingly
+        # stop if you get close and no goal
         if current_goal_pose is None:
             cmd_vel = Twist()
             cmd_vel.linear.x = 0.0
@@ -324,13 +322,7 @@ class TrackingNode(Node):
         ########### Write your code here ###########
 
         ###################################################################### _
-        # old code:
-        # TODO: Update the control velocity command
-        #cmd_vel = Twist()
-        #cmd_vel.linear.x = 0
-        #cmd_vel.linear.y = 0
-        #cmd_vel.angular.z = 0
-        #return cmd_vel
+
 
         #new code:
         K_v = 0.5

@@ -1,191 +1,472 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Apr 16 17:51:58 2026
-
-@author: Emerson
-"""
-
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Twist, PoseStamped
 from tf2_ros import TransformException, Buffer, TransformListener
 import numpy as np
 import math
+import time
+from std_msgs.msg import Bool
 
-"""Quaternion / rotation helpers"""
+## Functions for quaternion and rotation matrix conversion
+## The code is adapted from the general_robotics_toolbox package
+## Code reference: https://github.com/rpiRobotics/rpi_general_robotics_toolbox_py
 def hat(k):
-    khat = np.zeros((3, 3))
-    khat[0, 1] = -k[2]
-    khat[0, 2] = k[1]
-    khat[1, 0] = k[2]
-    khat[1, 2] = -k[0]
-    khat[2, 0] = -k[1]
-    khat[2, 1] = k[0]
+    """
+    Returns a 3 x 3 cross product matrix for a 3 x 1 vector
+
+             [  0 -k3  k2]
+     khat =  [ k3   0 -k1]
+             [-k2  k1   0]
+
+    :type    k: numpy.array
+    :param   k: 3 x 1 vector
+    :rtype:  numpy.array
+    :return: the 3 x 3 cross product matrix
+    """
+
+    khat=np.zeros((3,3))
+    khat[0,1]=-k[2]
+    khat[0,2]=k[1]
+    khat[1,0]=k[2]
+    khat[1,2]=-k[0]
+    khat[2,0]=-k[1]
+    khat[2,1]=k[0]
     return khat
 
 def q2R(q):
+    """
+    Converts a quaternion into a 3 x 3 rotation matrix according to the
+    Euler-Rodrigues formula.
+    
+    :type    q: numpy.array
+    :param   q: 4 x 1 vector representation of a quaternion q = [q0;qv]
+    :rtype:  numpy.array
+    :return: the 3x3 rotation matrix    
+    """
+    
     I = np.identity(3)
     qhat = hat(q[1:4])
     qhat2 = qhat.dot(qhat)
-    return I + 2 * q[0] * qhat + 2 * qhat2
+    return I + 2*q[0]*qhat + 2*qhat2
+######################
 
 def euler_from_quaternion(q):
-    w = q[0]
-    x = q[1]
-    y = q[2]
-    z = q[3]
+    w=q[0]
+    x=q[1]
+    y=q[2]
+    z=q[3]
+    # euler from quaternion
     roll = math.atan2(2 * (w * x + y * z), 1 - 2 * (x * x + y * y))
     pitch = math.asin(2 * (w * y - z * x))
     yaw = math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z))
-    return [roll, pitch, yaw]
+
+    return [roll,pitch,yaw]
 
 class TrackingNode(Node):
     def __init__(self):
         super().__init__('tracking_node')
         self.get_logger().info('Tracking Node Started')
-
-        """Latest detected orange-object pose in world frame"""
+        
+        # Current object pose
         self.obs_pose = None
+        self.goal_pose = None
+        
+        self.state = "Goal"
+        self.patrol_num = 0
+        self.patrol_points = [ np.array([1, 0, 0]),np.array([1, -1, 0]),np.array([0, -1, 0]),np.array([0, 0, 0])]
+        self.patrol = False
+        self.start = None
 
-        """ROS parameters"""
+        #EMERSON ADD
+        self.charge_point = None
+        self.go_charge = False
+        ##
+
+        # ROS parameters
         self.declare_parameter('world_frame_id', 'odom')
 
-        """TF listener"""
+        # Create a transform listener
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
-
-        """Velocity publisher"""
+        
+        # Create publisher for the control command
         self.pub_control_cmd = self.create_publisher(Twist, '/track_cmd_vel', 10)
+        # Create a subscriber to the detected object pose
+        self.sub_detected_goal_pose = self.create_subscription(PoseStamped, 'detected_color_object_pose', self.detected_obs_pose_callback, 10)
+        self.sub_detected_obs_pose = self.create_subscription(PoseStamped, 'detected_color_goal_pose', self.detected_goal_pose_callback, 10)
 
-        """Subscribe only to the orange object pose"""
-        self.sub_detected_object_pose = self.create_subscription(
-            PoseStamped,
-            'detected_color_object_pose',
-            self.detected_obs_pose_callback,
+        #EMERSON ADD
+        self.sub_go_charge = self.create_subscription(
+            Bool,
+            'go_charge',
+            self.go_charge_callback,
             10
         )
 
-        """Update control at 100 Hz"""
+        self.sub_patrol = self.create_subscription(
+            Bool,
+            'patrol',
+            self.patrol_callback,
+            10
+        )
+        ##
+        # Create timer, running at 100Hz
         self.timer = self.create_timer(0.01, self.timer_update)
 
+        self.state = "Goal"
+        self.start = None
+    
     def detected_obs_pose_callback(self, msg):
-        """Convert detected orange blob position into world frame"""
+        #self.get_logger().info('Received Detected Object Pose')
+        
         odom_id = self.get_parameter('world_frame_id').get_parameter_value().string_value
-        center_points = np.array([
-            msg.pose.position.x,
-            msg.pose.position.y,
-            msg.pose.position.z
-        ])
+        center_points = np.array([msg.pose.position.x, msg.pose.position.y, msg.pose.position.z])
+        
+        # TODO: Filtering
+        # You can decide to filter the detected object pose here
+        # For example, you can filter the pose based on the distance from the camera
+        # or the height of the object
+        # if np.linalg.norm(center_points) > 3 or center_points[2] > 0.7:
+        #     return
+        ############################################################ edit 1
+        if np.linalg.norm(center_points) > 3 or center_points[2] > 0.7:
+            return
 
+        print("Found Obstacle")
+        ##########################################################
+        
         try:
-            transform = self.tf_buffer.lookup_transform(
-                odom_id,
-                msg.header.frame_id,
-                rclpy.time.Time(),
-                rclpy.duration.Duration(seconds=0.1)
-            )
-
-            t_R = q2R(np.array([
-                transform.transform.rotation.w,
-                transform.transform.rotation.x,
-                transform.transform.rotation.y,
-                transform.transform.rotation.z
-            ]))
-
-            cp_world = t_R @ center_points + np.array([
-                transform.transform.translation.x,
-                transform.transform.translation.y,
-                transform.transform.translation.z
-            ])
-
+            # Transform the center point from the camera frame to the world frame
+            transform = self.tf_buffer.lookup_transform(odom_id,msg.header.frame_id,rclpy.time.Time(),rclpy.duration.Duration(seconds=0.1))
+            t_R = q2R(np.array([transform.transform.rotation.w,transform.transform.rotation.x,transform.transform.rotation.y,transform.transform.rotation.z]))
+            cp_world = t_R@center_points+np.array([transform.transform.translation.x,transform.transform.translation.y,transform.transform.translation.z])
         except TransformException as e:
             self.get_logger().error('Transform Error: {}'.format(e))
             return
-
-        """Always use the latest orange blob that is published"""
+        
+        # Get the detected object pose in the world frame
         self.obs_pose = cp_world
 
-    def get_current_object_pose_in_robot_frame(self):
-        """Convert saved world-frame object pose into robot frame"""
+    def detected_goal_pose_callback(self, msg):
+        #self.get_logger().info('Received Detected Object Pose')
+        
         odom_id = self.get_parameter('world_frame_id').get_parameter_value().string_value
+        center_points = np.array([msg.pose.position.x, msg.pose.position.y, msg.pose.position.z])
+        
+        # TODO: Filtering
+        # You can decide to filter the detected object pose here
+        # For example, you can filter the pose based on the distance from the camera
+        # or the height of the object
+        # if np.linalg.norm(center_points) > 3 or center_points[2] > 0.7:
+        #     return
 
+        ################################################################
+        if np.linalg.norm(center_points) > 3 or center_points[2] > 0.7:
+            return
+        
+        print("Found Goal")
+        ###############################################################
+        
         try:
-            transform = self.tf_buffer.lookup_transform(
-                'base_footprint',
-                odom_id,
-                rclpy.time.Time()
-            )
+            # Transform the center point from the camera frame to the world frame
+            transform = self.tf_buffer.lookup_transform(odom_id,msg.header.frame_id,rclpy.time.Time(),rclpy.duration.Duration(seconds=0.1))
+            t_R = q2R(np.array([transform.transform.rotation.w,transform.transform.rotation.x,transform.transform.rotation.y,transform.transform.rotation.z]))
+            cp_world = t_R@center_points+np.array([transform.transform.translation.x,transform.transform.translation.y,transform.transform.translation.z])
+        except TransformException as e:
+            self.get_logger().error('Transform Error: {}'.format(e))
+            return
+        
+        # Get the detected object pose in the world frame
+        if self.state == "Goal":
+            self.goal_pose = cp_world
+        
+    def get_current_poses(self):
+        
+        odom_id = self.get_parameter('world_frame_id').get_parameter_value().string_value
+        # Get the current robot pose
+        try:
+            # from base_footprint to odom
+            transform = self.tf_buffer.lookup_transform('base_footprint', odom_id, rclpy.time.Time())
+            self.robot_world_x = transform.transform.translation.x
+            self.robot_world_y = transform.transform.translation.y
+            self.robot_world_z = transform.transform.translation.z
+            self.robot_world_R = q2R([transform.transform.rotation.w, transform.transform.rotation.x, transform.transform.rotation.y, transform.transform.rotation.z])
+            self.robot_world_R_euler = euler_from_quaternion([transform.transform.rotation.w, transform.transform.rotation.x, transform.transform.rotation.y, transform.transform.rotation.z])
 
-            robot_world_x = transform.transform.translation.x
-            robot_world_y = transform.transform.translation.y
-            robot_world_z = transform.transform.translation.z
+            
+            ################################################################### changing this
 
-            robot_world_R = q2R(np.array([
-                transform.transform.rotation.w,
-                transform.transform.rotation.x,
-                transform.transform.rotation.y,
-                transform.transform.rotation.z
-            ]))
+            #EMERSON MOVE
+            if self.start is None:
+                self.start = np.array([self.robot_world_x, self.robot_world_y, self.robot_world_z])
+                #EMERSON ADD
+                self.charge_point = np.array([0.0, -1.0, 0.0])
+            ##
 
-            object_pose = robot_world_R @ self.obs_pose + np.array([
-                robot_world_x,
-                robot_world_y,
-                robot_world_z
-            ])
-
+            obstacle_pose = self.obs_pose
+            goal_pose = self.goal_pose
+            
+            
+            ################################################################### changing this ^
+        
         except TransformException as e:
             self.get_logger().error('Transform error: ' + str(e))
-            return None
+            return
+        
+        return obstacle_pose, goal_pose
 
-        return object_pose
+    
+    #EMERSON ADD
+    def go_charge_callback(self, msg):
+        self.go_charge = msg.data
+        print("go_charge:", self.go_charge)
+        self.state = "Charge"
+        if not self.go_charge:
+            self.state = "Goal"
+        
+    def patrol_callback(self, msg):
+        self.patrol = msg.data
+        print("patrol:", self.patrol)
+        if self.patrol:
+            self.state = "patrol"
+            self.patrol_num = 0
+            self.goal_pose = self.patrol_points[0]
+        else:
+            self.state = None
+            self.state = "Goal"
+    ##
 
+    
     def timer_update(self):
-        """If no orange object is detected, stop. Otherwise follow it."""
-        cmd_vel = Twist()
-
-        if self.obs_pose is None:
+        ################### Write your code here ###################
+        
+        ################################################################
+        pose_check = self.get_current_poses()
+        if pose_check is None:
+            cmd_vel = Twist()
             cmd_vel.linear.x = 0.0
             cmd_vel.angular.z = 0.0
             self.pub_control_cmd.publish(cmd_vel)
             return
+            
+        current_obs_pose, current_goal_pose = pose_check
 
-        current_obs_pose = self.get_current_object_pose_in_robot_frame()
-        if current_obs_pose is None:
-            return
-
-        cmd_vel = self.controller(current_obs_pose)
-        self.pub_control_cmd.publish(cmd_vel)
-
-    def controller(self, obs_pose):
-        """Simple proportional controller to face and approach orange object"""
-        cmd_vel = Twist()
-
-        x = obs_pose[0]
-        y = obs_pose[1]
-
-        heading_error = math.atan2(y, x)
-        distance = math.sqrt(x**2 + y**2)
-
-        stop_distance = 0.3
-        k_linear = 0.4
-        k_angular = 1.5
-
-        #cmd_vel.angular.z = k_angular * heading_error
-
-        if distance > stop_distance:
-            cmd_vel.linear.x = k_linear * (distance - stop_distance)
-        else:
+        #EMERSON ADD
+        if self.go_charge and self.charge_point is not None:
+            current_goal_pose = self.charge_point
+        ###############################################################
+        
+        # robot stops if object not detected and no goal
+        if current_goal_pose is None:
+            cmd_vel = Twist()
             cmd_vel.linear.x = 0.0
+            cmd_vel.angular.z = 0.0
+            self.pub_control_cmd.publish(cmd_vel)
+            return
+        
+        # Get the current object pose in the robot base_footprint frame
+        #current_obs_pose, current_goal_pose = self.get_current_poses()
+        # ^commenting this line out
+        
+        # TODO: get the control velocity command
+        ###################################################################### _        
+        #cmd_vel = self.controller()   #old line
+        odom_id = self.get_parameter('world_frame_id').get_parameter_value().string_value
+        # Get the current robot pose
+        # from base_footprint to odom
+        transform = self.tf_buffer.lookup_transform('base_footprint', odom_id, rclpy.time.Time())
+        self.robot_world_x = transform.transform.translation.x
+        self.robot_world_y = transform.transform.translation.y
+        self.robot_world_z = transform.transform.translation.z
+        self.robot_world_R = q2R([transform.transform.rotation.w, transform.transform.rotation.x, transform.transform.rotation.y, transform.transform.rotation.z])
 
+
+        ### EMERSON ADD LARGE CHUNK
+        if self.go_charge and self.charge_point is not None:
+            current_goal_pose = self.charge_point
+        
+            dist_to_charge = np.linalg.norm(
+                self.charge_point[:2] - np.array([self.robot_world_x, self.robot_world_y])
+            )
+        
+            if dist_to_charge < 0.10:
+                cmd_vel = Twist()
+                cmd_vel.linear.x = 0.0
+                cmd_vel.linear.y = 0.0
+                cmd_vel.angular.z = 0.0
+                self.pub_control_cmd.publish(cmd_vel)
+                self.go_charge = False
+                print("Reached charging point")
+                time.sleep(100)
+                return
+        ##
+        
+        cmd_vel = self.controller(current_obs_pose, current_goal_pose)
+
+        """  EMERSON MOVE TO EARLIER PART
+        if self.start is None:
+            self.start = np.array([self.robot_world_x, self.robot_world_y, self.robot_world_z])
+            #EMERSON ADD
+            self.charge_point = self.start + np.array([0.0, -1, 0.0])
+            ##
+        """ 
+        ################################################################### ^
+        
+        # publish the control command
+        self.pub_control_cmd.publish(cmd_vel)
+        #################################################
+    
+    def controller(self, obs_pose, goal_pose):
+        # Instructions: You can implement your own control algorithm here
+        # feel free to modify the code structure, add more parameters, more input variables for the function, etc.
+        
+        ########### Write your code here ###########
+
+        ###################################################################### _
+        # old code:
+        # TODO: Update the control velocity command
+        #cmd_vel = Twist()
+        #cmd_vel.linear.x = 0
+        #cmd_vel.linear.y = 0
+        #cmd_vel.angular.z = 0
+        #return cmd_vel
+
+        #new code:
+        K_v = 0.5
+        K_h = 0.6
+        zetta = 0.5
+        n = 2
+        Q = 1
+
+        # EMERSON CHANGE (BACK TO ORIGINAL)
+        """
+        pose = np.array([0,0,0])
+        #pose = np.array([self.robot_world_x, self.robot_world_y, self.robot_world_z])
+        print("pose:", pose)
+        world_goal_pose = None
+        if self.state == "patrol":
+            world_goal_pose = self.robot_world_R@self.patrol_points[self.patrol_num]+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
+
+        elif self.state == "Charge":
+            world_goal_pose = self.robot_world_R@self.charge_point+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
+            dist_to_charge = np.linalg.norm(
+                self.charge_point[:2] - np.array([self.robot_world_x, self.robot_world_y])
+            )
+            if dist_to_charge < 0.10:
+                K_h = 0
+                K_v = 0
+                
+        else:
+            world_goal_pose = self.robot_world_R@goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
+            #world_goal_pose = goal_pose
+        print("goal:", world_goal_pose)
+
+        dis_goal = (world_goal_pose - pose) 
+        """
+        ##NEW_TEST
+        pose = np.array([self.robot_world_x, self.robot_world_y, self.robot_world_z])
+        print("pose:", pose)
+        world_goal_pose = None
+        if self.state == "patrol":
+            world_goal_pose = self.patrol_points[self.patrol_num]
+
+        elif self.state == "Charge":
+            world_goal_pose = self.charge_point
+            dist_to_charge = np.linalg.norm(
+                self.charge_point[:2] - np.array([self.robot_world_x, self.robot_world_y])
+            )
+            if dist_to_charge < 0.10:
+                K_h = 0
+                K_v = 0
+                
+        else:
+            world_goal_pose = goal_pose
+            #world_goal_pose = goal_pose
+        print("goal:", world_goal_pose)
+
+        dis_goal = (world_goal_pose - pose)
+
+        if self.state == "patrol":
+            if np.sqrt(dis_goal[0]**2+ dis_goal[1]**2) < 0.05:
+                self.patrol_num = (self.patrol_num + 1) % 4
+
+        #Potential Field
+        U_grad = zetta * dis_goal
+        #print(dis_goal)
+
+        # EMERSON want to maybe change if line to "if not obs_pose is None:"
+
+        """
+        if not goal_pose is None:
+            #world_obs_pose = self.robot_world_R@self.goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
+            #EMERSON want to maybe change if line to "world_obs_pose = obs_pose"
+            world_obs_pose = goal_pose
+            print("obs:", world_obs_pose)
+            dis_obj = pose - world_obs_pose
+            radius = 0.1
+            if np.linalg.norm(dis_obj) - radius < Q:
+                U_grad = U_grad - 0.5*n*(1/Q - 1/(np.linalg.norm(dis_obj)-radius))*1/(np.linalg.norm(dis_obj)-radius)**2*dis_obj/(np.linalg.norm(dis_obj))
+        """
+
+        """
+        if not obs_pose is None:
+            world_obs_pose = self.robot_world_R@obs_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
+            #world_obs_pose = obs_pose
+            print("obs:", world_obs_pose)
+            dis_obj = pose - world_obs_pose
+            radius = 0.1
+            if np.linalg.norm(dis_obj) - radius < Q:
+                U_grad = U_grad - 0.5*n*(1/Q - 1/(np.linalg.norm(dis_obj)-radius))*1/(np.linalg.norm(dis_obj)-radius)**2*dis_obj/(np.linalg.norm(dis_obj))
+        """
+        ##NEW_TEST
+        if not obs_pose is None:
+            world_obs_pose = obs_pose
+            #world_obs_pose = obs_pose
+            print("obs:", world_obs_pose)
+            dis_obj = pose - world_obs_pose
+            radius = 0.1
+            if np.linalg.norm(dis_obj) - radius < Q:
+                U_grad = U_grad - 0.5*n*(1/Q - 1/(np.linalg.norm(dis_obj)-radius))*1/(np.linalg.norm(dis_obj)-radius)**2*dis_obj/(np.linalg.norm(dis_obj))
+        
+        print(U_grad)
+        #U_grad = self.robot_world_R@U_grad
+        theta_star = np.arctan2(dis_goal[1],dis_goal[0])
+        
+        print(theta_star - self.robot_world_R_euler[2])
+        gamma_star = max(-np.pi/2, min(np.pi/2, K_h * (theta_star)))
+        #v_star = np.array([0,0])
+
+        #if abs(gamma_star) < 0.1:
+        v_star = np.array([min(2, max(-2, K_v *U_grad[0])),min(2, max(-2, K_v *U_grad[1]))])
+        
+        #gamma_star = 0.0
+        
+        delta_t = 0.01
+
+        u = [float(v_star[0]),
+            float(v_star[1]),
+            float(gamma_star)]
+        cmd_vel = Twist()
+        cmd_vel.linear.x = u[0]
+        cmd_vel.linear.y = u[1]
+        cmd_vel.angular.z = u[2]
+        
+        self.get_logger().warn(f'{cmd_vel}')
         return cmd_vel
+    
+       ################################################################### ^
+
 
 def main(args=None):
-    rclpy.init(args=args)
+    # Initialize the rclpy library
+    rclpy.init(args=args) 
+    # Create the node
     tracking_node = TrackingNode()
     rclpy.spin(tracking_node)
+    # Destroy the node explicitly
     tracking_node.destroy_node()
+    # Shutdown the ROS client library for Python
     rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
-
