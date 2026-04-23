@@ -1,8 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Twist, PoseStamped
-from tf2_ros import TransformException, Buffer, TransformListener
-import tf.transformations as tr
+from tf2_ros import TransformException, Buffer, TransformListener, quaternion_from_matrix
 import numpy as np
 import math
 import time
@@ -389,7 +388,7 @@ class TrackingNode(Node):
         print(U_grad)
         #U_grad = self.robot_world_R@U_grad
         theta_star = np.arctan2(dis_goal[1],dis_goal[0])
-        quat = tr.quaternion_from_matrix(self.robot_world_R)
+        quat = quaternion_from_matrix(self.robot_world_R)
         print(euler_from_quaternion(quat), theta_star)
         gamma_star = max(-np.pi/2, min(np.pi/2, -K_h * theta_star))
         v_star = np.array([0,0])
