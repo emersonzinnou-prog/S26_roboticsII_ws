@@ -145,9 +145,9 @@ def main(args=None):
         elif key == 'h':
             joy_safety_node.pub_go_charge.publish(Bool(data=False))
             print("Cancel go to charging point") 
-         elif key =='p':   #EMERSON ADD
+        elif key =='p':   #EMERSON ADD
             joy_safety_node.pub_go_charge.publish(Bool(data=True))
-         elif key == ';':
+        elif key == ';':
             joy_safety_node.pub_go_charge.publish(Bool(data=False))
             print("Cancel go to charging point") ###
          
