@@ -340,7 +340,7 @@ class TrackingNode(Node):
         Q = 1
 
         # EMERSON CHANGE (BACK TO ORIGINAL)
-        pose = self.robot_world_R@np.array([-self.robot_world_x, -self.robot_world_y, self.robot_world_z])
+        pose = np.array([0,0,0])
         #pose = np.array([self.robot_world_x, self.robot_world_y, self.robot_world_z])
         print("pose:", pose)
         world_goal_pose = None
@@ -351,8 +351,8 @@ class TrackingNode(Node):
             world_goal_pose = self.charge_point
 
         else:
-            #world_goal_pose = self.robot_world_R@self.goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
-            world_goal_pose = goal_pose
+            world_goal_pose = self.robot_world_R@goal_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
+            #world_goal_pose = goal_pose
         print("goal:", world_goal_pose)
 
         dis_goal = (world_goal_pose - pose) 
@@ -379,7 +379,8 @@ class TrackingNode(Node):
         """
 
         if not obs_pose is None:
-            world_obs_pose = obs_pose
+            world_obs_pose = self.robot_world_R@obs_pose+np.array([self.robot_world_x,self.robot_world_y,self.robot_world_z])
+            #world_obs_pose = obs_pose
             print("obs:", world_obs_pose)
             dis_obj = pose - world_obs_pose
             radius = 0.1
