@@ -458,10 +458,8 @@ class TrackingNode(Node):
             K_v_use = K_v
         
         if abs(heading_error) < 0.25:
-            v_star = np.array([
-                min(0.20, max(-0.20, K_v_use * U_grad[0])),
-                min(0.20, max(-0.20, K_v_use * U_grad[1]))
-            ])
+            forward_speed = min(0.20, max(0.0, K_v_use * dist_goal))
+            v_star = np.array([forward_speed, 0.0])
         else:
             v_star = np.array([0.0, 0.0])
         
