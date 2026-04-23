@@ -336,7 +336,7 @@ class TrackingNode(Node):
         K_h = 0.6
         zetta = 0.5
         n = 2
-        Q = 1
+        Q = 0.3
 
         # EMERSON CHANGE (BACK TO ORIGINAL)
         """
