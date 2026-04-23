@@ -333,7 +333,7 @@ class TrackingNode(Node):
 
         #new code:
         K_v = 0.5
-        K_h = 0.9
+        K_h = 0.6
         zetta = 0.5
         n = 2
         Q = 1
