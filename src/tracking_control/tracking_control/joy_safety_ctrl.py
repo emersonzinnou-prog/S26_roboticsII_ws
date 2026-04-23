@@ -4,6 +4,9 @@ from geometry_msgs.msg import Twist
 import numpy as np
 import sys, select, termios, tty
 
+#EMERSON ADD
+from std_msgs.msg import Bool
+
 msg = """
 Control Your Robot!
 Press and hold the keys to move around.
@@ -18,6 +21,8 @@ t/y : turn counterclockwise/clockwise
 k : force stop
 space key : turn on/off tracking
 anything else : stop smoothly
+
+g : go to charging point
 
 CTRL-C to quit
 """
@@ -51,6 +56,10 @@ class JoySafetyNode(Node):
         
         # Create publisher for the control command
         self.pub_control_cmd = self.create_publisher(Twist, '/cmd_vel', 10)
+
+        #EMERSON ADD
+        self.pub_go_charge = self.create_publisher(Bool, '/go_charge', 10)
+       
         # Create a subscriber to the control command
         self.sub_track_cmd = self.create_subscription(Twist, '/track_cmd_vel', self.tracking_cmd_callback, 10)
     
@@ -125,7 +134,14 @@ def main(args=None):
         elif key == 't':
             joy_safety_node.joystick_state_ang = 2
         elif key == 'y':
-            joy_safety_node.joystick_state_ang = 0
+            joy_safety_node.joystick_state_ang = 0 
+           
+        elif key =='g':   #EMERSON ADD
+            joy_safety_node.pub_go_charge.publish(Bool(data=True))
+        elif key == 'h':
+            joy_safety_node.pub_go_charge.publish(Bool(data=False))
+            print("Cancel go to charging point") ###
+            
         elif key in moveBindings.keys():
             joy_safety_node.joystick_state = moveBindings[key]
         elif key == '\x03':
